@@ -1,8 +1,5 @@
 package view;
-/**
- *
- * @author Gustavo Petro
- */
+
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
@@ -90,6 +87,8 @@ public class RooMakingJFX3D extends Application {
     private Box floor;
     private Box wallBack;
     private Box wallLeft;
+    
+    private CrearItem crearItem;
     
     public static Room roomSeleccionada;
     private List<Item> ItemSeleccionados= new ArrayList<>();
@@ -236,8 +235,19 @@ public class RooMakingJFX3D extends Application {
             "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
             "-fx-border-radius: 5;"  // Bordes redondeados
         );        
-        objectSelector.setOnAction(e -> showDimensionDialog(objectSelector.getValue()));       
+        objectSelector.setOnAction(e -> showDimensionDialog(objectSelector.getValue()));
 
+        Button itemsButton = new Button("Modelado Items");
+        itemsButton.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(126,188,137), rgb(162,217,206));" + // Degradado de verde
+            "-fx-text-fill: white;" +  // Texto en blanco
+            "-fx-font-weight: bold;" +  // Texto en negrita
+            "-fx-border-color: rgb(126,188,137);" +  // Borde del botón
+            "-fx-border-radius: 5;" +  // Bordes redondeados
+            "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
+        );
+        itemsButton.setOnAction(e -> abrirCrearItem());        
+        
         Label groupLabel = new Label("Seleccionar Item:");
         groupLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: rgb(210,180,140);"); // Color tierra        
         ComboBox<String> groupSelector = new ComboBox<>();
@@ -382,7 +392,7 @@ public class RooMakingJFX3D extends Application {
             
             });
         controlPanel.setAlignment(Pos.CENTER);            
-        controlPanel.getChildren().addAll(roomButton, titleLabel, objectSelector,fijarobjetos, groupLabel, groupSelector, saveButton, loadButton, agregarobjetos, switchCameraButton);
+        controlPanel.getChildren().addAll(roomButton, titleLabel, objectSelector,itemsButton, fijarobjetos, groupLabel, groupSelector, saveButton, loadButton, agregarobjetos, switchCameraButton);
         controlPanel.setStyle(
             "-fx-background-color: rgb(245,245,220);" +  // Fondo beige claro
             "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
@@ -1062,6 +1072,7 @@ private void OrdenarObjetos() {
         dialog.setScene(dialogScene);
         dialog.show();
     }
+        
 
         private void showRoomDialog() {
             Stage dialog = new Stage();
@@ -1926,7 +1937,24 @@ public void configuracionIluminacion(String pared1, String pared2, String pared3
         luzTecho.setTranslateZ(0);
         root3D.getChildren().add(luzTecho);
     }
-}  
+}
+
+    private void abrirCrearItem() {
+        Stage crearItemStage = new Stage();
+        CrearItem crearItem = new CrearItem();
+
+        try {
+            crearItem.start(crearItemStage);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        crearItemStage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 
     public SubScene getSubScene() {
         return subScene;

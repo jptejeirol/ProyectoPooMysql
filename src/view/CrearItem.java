@@ -1,8 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/javafx/FXMain.java to edit this template
- */
 package view;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Base64;
@@ -86,7 +83,7 @@ import javafx.scene.transform.Transform;
 import javafx.stage.Stage;
 
 
-public class Prueba007HashAndCreateItem extends Application {
+public class CrearItem extends Application {
 
     private PerspectiveCamera camera;
     private double mouseX, mouseY;
@@ -656,9 +653,4 @@ public  String getSceneHash(Scene scene) {
         return sb.toString();
     }
 
-
-
-    public static void main(String[] args) {
-        launch(args);
-    }
 }
