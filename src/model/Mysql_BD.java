@@ -7,9 +7,9 @@ public class Mysql_BD {
     
     private static Connection conn;
     private static final String driver ="com.mysql.cj.jdbc.Driver";
-    private final String url = "jdbc:mysql://localhost:3306/proyectoPoo";
+    private final String url = "jdbc:mysql://localhost:3306/prueba1";
     private final String user = "root";
-    private final String password = "tuclave";
+    private final String password = "";
 
     public  Connection conectar() {
         try {

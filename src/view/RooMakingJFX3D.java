@@ -58,7 +58,9 @@ import controller.services.ServicesUsuario;
 import java.util.Optional;
 import java.util.Random;
 import javafx.application.Platform;
+import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.PointLight;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextInputDialog;
@@ -106,7 +108,7 @@ public class RooMakingJFX3D extends Application {
         // Crear la escena 3D
         root3D = new Group();
         subScene = new SubScene(root3D, 600, 400, true, javafx.scene.SceneAntialiasing.BALANCED);
-        subScene.setFill(Color.CADETBLUE);
+        subScene.setFill(Color.BEIGE);
 
         // Configurar la cámara 1
         cameraExterna = new PerspectiveCamera(true);
@@ -146,6 +148,15 @@ public class RooMakingJFX3D extends Application {
         HBox mainLayout = new HBox(10);
         mainLayout.setPadding(new Insets(10));
         mainLayout.getChildren().addAll(subScene, controlPanel);
+        
+        mainLayout.setStyle(
+            "-fx-background-color: linear-gradient(to bottom right, rgb(245,245,220), rgb(162,217,206)); " +  // Fondo degradado de beige a verde claro
+            "-fx-border-color: rgb(210,180,140); " +  // Color del borde tierra
+            "-fx-border-width: 2px; " +  // Grosor del borde
+            "-fx-border-radius: 10px; " +  // Bordes redondeados
+            "-fx-background-radius: 10px; " +  // Bordes redondeados para el fondo
+            "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.5, 0, 0);"  // Efecto de sombra
+        );        
 
         // Crear la escena principal
         Scene mainScene = new Scene(mainLayout);
@@ -180,6 +191,14 @@ public class RooMakingJFX3D extends Application {
         controlPanel.setPadding(new Insets(10));
         
         Button switchCameraButton = new Button("Cambiar cámara");
+        switchCameraButton.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(126,188,137), rgb(162,217,206));" + // Degradado de verde
+            "-fx-text-fill: white;" +  // Texto en blanco
+            "-fx-font-weight: bold;" +  // Texto en negrita
+            "-fx-border-color: rgb(126,188,137);" +  // Borde del botón
+            "-fx-border-radius: 5;" +  // Bordes redondeados
+            "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
+        );        
 
         switchCameraButton.setOnAction(event -> {
             if (scene.getCamera() == cameraExternal) {
@@ -198,19 +217,59 @@ public class RooMakingJFX3D extends Application {
         });
         
         Button roomButton = new Button("Crear Room");
+        roomButton.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(126,188,137), rgb(162,217,206));" + // Degradado de verde
+            "-fx-text-fill: white;" +  // Texto en blanco
+            "-fx-font-weight: bold;" +  // Texto en negrita
+            "-fx-border-color: rgb(126,188,137);" +  // Borde del botón
+            "-fx-border-radius: 5;" +  // Bordes redondeados
+            "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
+        );        
         roomButton.setOnAction(e -> showRoomDialog()) ; 
         
         Label titleLabel = new Label("Crear Item:");
+        titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: rgb(210,180,140);"); // Color tierra        
         ComboBox<String> objectSelector = new ComboBox<>();
         objectSelector.getItems().addAll("Prisma", "Esfera", "Cilindro");
+        objectSelector.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(245,245,220), rgb(162,217,206));" +  // Degradado de beige claro a verde claro
+            "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
+            "-fx-border-radius: 5;"  // Bordes redondeados
+        );        
         objectSelector.setOnAction(e -> showDimensionDialog(objectSelector.getValue()));       
 
         Label groupLabel = new Label("Seleccionar Item:");
+        groupLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: rgb(210,180,140);"); // Color tierra        
         ComboBox<String> groupSelector = new ComboBox<>();
         groupSelector.getItems().addAll("Cama Simple", "Cama Doble", "Mesa de Noche", "Armario", "Mueble", "Mesa", "Silla", "Televisor", "Televisor Grande");
+        groupSelector.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(162,217,206), rgb(126,188,137));" +  // Degradado de verde claro a verde suave
+            "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
+            "-fx-border-radius: 5;"  // Bordes redondeados
+        );        
         groupSelector.setOnAction(e -> addGroup(groupSelector.getValue()));
         
+        // Botón de iluminación
+        Button iluminacionButton = new Button("Iluminación");
+        iluminacionButton.setStyle(
+            "-fx-background-color: rgb(245,245,220);" +  // Beige claro
+            "-fx-text-fill: black;" +  // Texto en negro
+            "-fx-font-weight: bold;" +
+            "-fx-border-color: rgb(210,180,140);" +
+            "-fx-border-radius: 5;" +
+            "-fx-background-radius: 5;"
+        );
+        iluminacionButton.setOnAction(e -> opcionesIluminacion(wallLeft, wallBack));        
+        
         Button saveButton = new Button("Guardar");
+        saveButton.setStyle(
+            "-fx-background-color: rgb(126,188,137);" +  // Verde suave
+            "-fx-text-fill: white;" +
+            "-fx-font-weight: bold;" +
+            "-fx-border-color: rgb(126,188,137);" +
+            "-fx-border-radius: 5;" +
+            "-fx-background-radius: 5;"
+        );        
         saveButton.setOnAction(e -> {
             // Crear un cuadro de diálogo para solicitar el nombre del Room
             TextInputDialog dialog = new TextInputDialog();
@@ -234,9 +293,25 @@ public class RooMakingJFX3D extends Application {
         });       
 
         Button loadButton = new Button("Cargar");
+        loadButton.setStyle(
+            "-fx-background-color: rgb(210,180,140);" +  // Color tierra
+            "-fx-text-fill: white;" +
+            "-fx-font-weight: bold;" +
+            "-fx-border-color: rgb(210,180,140);" +
+            "-fx-border-radius: 5;" +
+            "-fx-background-radius: 5;"
+        );        
         loadButton.setOnAction(e -> showCargarDialog());        
         
         Button fijarobjetos = new Button("Fijar Objetos");
+        fijarobjetos.setStyle(
+            "-fx-background-color: rgb(162,217,206);" +  // Verde claro
+            "-fx-text-fill: white;" +
+            "-fx-font-weight: bold;" +
+            "-fx-border-color: rgb(162,217,206);" +
+            "-fx-border-radius: 5;" +
+            "-fx-background-radius: 5;"
+        );        
         fijarobjetos.setOnAction(e -> {
         Platform.runLater(() -> {
             Alert alert = new Alert(AlertType.INFORMATION);
@@ -248,6 +323,14 @@ public class RooMakingJFX3D extends Application {
 
             controlPanel.getChildren().removeAll(loadButton,saveButton);
             Button hecho = new Button("hecho");
+                hecho.setStyle(
+                    "-fx-background-color: rgb(126,188,137);" +
+                    "-fx-text-fill: white;" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-border-color: rgb(126,188,137);" +
+                    "-fx-border-radius: 5;" +
+                    "-fx-background-radius: 5;"
+                );            
             hecho.setOnAction(ev -> {
             togglePositionsLock();
   
@@ -262,6 +345,14 @@ public class RooMakingJFX3D extends Application {
                 });
          });
             Button agregarobjetos = new Button("agregar para ordenar");
+            agregarobjetos.setStyle(
+                "-fx-background-color: rgb(126,188,137);" +  // Verde suave
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-border-color: rgb(126,188,137);" +
+                "-fx-border-radius: 5;" +
+                "-fx-background-radius: 5;"
+            );            
             agregarobjetos.setOnAction(e -> {
         Platform.runLater(() -> {
             Alert alert = new Alert(AlertType.INFORMATION);
@@ -272,6 +363,14 @@ public class RooMakingJFX3D extends Application {
             alert.showAndWait();
             });
             Button ordenarbtn = new Button("Ordenar");
+            ordenarbtn.setStyle(
+                "-fx-background-color: rgb(162,217,206);" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-border-color: rgb(162,217,206);" +
+                "-fx-border-radius: 5;" +
+                "-fx-background-radius: 5;"
+            );            
             ordenarbtn.setOnAction(ev -> {
             OrdenarObjetos();
             });   
@@ -282,54 +381,116 @@ public class RooMakingJFX3D extends Application {
             controlPanel.requestLayout(); // Forzar actualización de la disposición
             
             });
+        controlPanel.setAlignment(Pos.CENTER);            
         controlPanel.getChildren().addAll(roomButton, titleLabel, objectSelector,fijarobjetos, groupLabel, groupSelector, saveButton, loadButton, agregarobjetos, switchCameraButton);
+        controlPanel.setStyle(
+            "-fx-background-color: rgb(245,245,220);" +  // Fondo beige claro
+            "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
+            "-fx-border-width: 2px;" +  // Grosor del borde
+            "-fx-border-radius: 10px;"  // Bordes redondeados
+        );        
         return controlPanel;
     }
     
 private void OrdenarObjetos() {
     Random random = new Random();
-    //z=0 es a la derecha, x = 0 es al fondo
-    double rangoMinX = -2000; // Rango ajustado
-    double rangoMaxX = 2000;
-    double rangoMinZ = -2000; // Rango ajustado
-    double rangoMaxZ = 2000;
-    double margenSeguridad = 50; // Distancia mínima entre objetos para evitar solapamiento
+
+    double rangoMinX = -0.8 * wallBack.getWidth() / 2;
+    double rangoMaxX = 0.8 * wallBack.getWidth() / 2;
+    double rangoMinZ = -0.8 * wallLeft.getDepth() / 2;
+    double rangoMaxZ = 0.8 * wallLeft.getDepth() / 2;
+    double margenSeguridad = 500;
 
     List<Movible> colocados = new ArrayList<>();
 
     for (javafx.scene.Node node : root3D.getChildren()) {
-        if (node instanceof Movible) {
-            Movible movible = (Movible) node;
+        if (node instanceof Movible movible) {
 
-            if (!movible.isFijo()) { 
-                // Si fijo es false, saltar este objeto y no cambiar su posición
+            if (!movible.isFijo()) {
                 continue;
             }
 
+            String clase = movible.getClass().getName();
+            double objWidth = movible.getBoundsInParent().getWidth();
+            double objDepth = movible.getBoundsInParent().getDepth();
             boolean solapado;
+
             do {
                 solapado = false;
                 double nuevaX, nuevaZ;
-                // Elegir aleatoriamente si X o Z tendrá el valor 0 o 5000
+
+                // Generar posiciones cercanas a los límites sin salirse
                 if (random.nextBoolean()) {
-                    nuevaX = (random.nextBoolean()) ? rangoMinX : rangoMaxX;
+                    nuevaX = (random.nextBoolean()) ? rangoMinX + objWidth / 5.5 : rangoMaxX - objWidth / 5.5;
                     nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble();
                 } else {
-                    nuevaZ = (random.nextBoolean()) ? rangoMinZ : rangoMaxZ;
+                    nuevaZ = (random.nextBoolean()) ? rangoMinZ + objDepth / 3.1 : rangoMaxZ - objDepth / 3.1;
                     nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
-                }
-                // Generar nuevas posiciones aleatorias
-                if (random.nextBoolean()) {
-                    // Si se elige que X sea diferente de 0 o 5000, Z debe ser 0 o 5000
-                    nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
-                    nuevaZ = (random.nextBoolean()) ? rangoMinZ : rangoMaxZ;
-                } else {
-                    // Si se elige que Z sea diferente de 0 o 5000, X debe ser 0 o 5000
-                    nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble();
-                    nuevaX = (random.nextBoolean()) ? rangoMinX : rangoMaxX;
                 }
 
-                // Verificar si la nueva posición solapa con algún objeto ya colocado
+                // Ajustar nuevaX y nuevaZ para acercar los objetos a los límites sin salirse
+                nuevaX = Math.max(rangoMinX + objWidth / 5.5, Math.min(nuevaX, rangoMaxX - objWidth / 5.5));
+                nuevaZ = Math.max(rangoMinZ + objDepth / 3.1, Math.min(nuevaZ, rangoMaxZ - objDepth / 3.1));
+                
+                switch (clase) {
+                    case "CamaSimple":
+                        break;                        
+                    case "CamaDoble":
+
+                        break;
+
+                    case "Armario":
+
+                        break;
+
+                    case "Mueble":
+                        break;                        
+                    case "Mesa":
+
+                        break;
+
+                    case "MesaDeNoche":
+                        // Buscar una cama cercana para colocar la mesa de noche al lado
+                        for (Movible colocado : colocados) {
+                            if (colocado.getClass().getName().equals("CamaSimple") || colocado.getClass().getName().equals("CamaDoble")) {
+                                nuevaX = colocado.getTranslateX() + (objWidth / 2 + colocado.getBoundsInParent().getWidth() / 2);
+                                nuevaZ = colocado.getTranslateZ();
+                                break;
+                            }
+                        }
+                        break;
+
+                    case "Silla":
+                        // Buscar una mesa cercana para colocar la silla al lado
+                        for (Movible colocado : colocados) {
+                            if (colocado.getClass().getName().equals("Mesa")) {
+                                nuevaX = colocado.getTranslateX() + (objWidth / 2 + colocado.getBoundsInParent().getWidth() / 2);
+                                nuevaZ = colocado.getTranslateZ();
+                                break;
+                            }
+                        }
+                        break;
+
+                    case "TV":
+                    case "TVGrande":
+                        // Buscar un mueble o mesa para colocar la TV encima o al frente
+                        for (Movible colocado : colocados) {
+                            if (colocado.getClass().getName().equals("Mueble") || colocado.getClass().getName().equals("Mesa")) {
+                                nuevaX = colocado.getTranslateX();
+                                nuevaZ = colocado.getTranslateZ() + (objDepth / 2 + colocado.getBoundsInParent().getDepth() / 2);
+                                movible.setTranslateY(colocado.getBoundsInParent().getMaxY());
+                                break;
+                            }
+                        }
+                        break;
+
+                    default:
+                        nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
+                        nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble();
+                        break;
+                }                
+
+                // Verificar solapamiento con otros objetos
                 for (Movible colocado : colocados) {
                     double distancia = Math.sqrt(Math.pow(colocado.getTranslateX() - nuevaX, 2) +
                                                  Math.pow(colocado.getTranslateZ() - nuevaZ, 2));
@@ -340,15 +501,13 @@ private void OrdenarObjetos() {
                 }
 
                 if (!solapado) {
-                    // Colocar el objeto en la nueva posición
-                    System.out.println("en x"+nuevaX+"en z"+nuevaZ);
                     movible.setTranslateX(nuevaX);
                     movible.setTranslateZ(nuevaZ);
-                    movible.setTranslateY(0); // Asegurar que la posición en Y sea 0
-                    colocados.add(movible); // Añadir a la lista de objetos ya colocados
+                    //movible.setTranslateY(0);
+                    colocados.add(movible);
                 }
 
-            } while (solapado); // Repetir hasta encontrar una posición no solapada
+            } while (solapado);
         }
     }
 }
@@ -1672,10 +1831,102 @@ private Map<String, List<String>> cargarOpcionesDesdeBD() {
     return resultado;
 }
 
- private void ordenarMuebles() {
-    Random random = new Random();
+    private void opcionesIluminacion(Box wallLeft, Box wallBack) {
+        Stage secondaryStage = new Stage();       
+        
+        Label pared1Label = new Label("Pared Trasera");        
+        ComboBox<String> pared1ComboBox = new ComboBox<>();
+        pared1ComboBox.getItems().addAll("Bombillo", "Ventana", "sin luz");
 
-}   
+        Label pared2Label = new Label("Pared Izquierda");         
+        ComboBox<String> pared2ComboBox = new ComboBox<>();
+        pared2ComboBox.getItems().addAll("Bombillo", "Ventana", "sin luz");
+
+        Label pared3Label = new Label("Pared Derecha");                 
+        ComboBox<String> pared3ComboBox = new ComboBox<>();
+        pared3ComboBox.getItems().addAll("Bombillo", "Ventana", "sin luz");
+
+        Label techoLabel = new Label("Techo");        
+        ComboBox<String> techoComboBox = new ComboBox<>();
+        techoComboBox.getItems().addAll("Bombillo", "Ventana", "sin luz");
+
+        Button aplicarButton = new Button("Aplicar");
+        aplicarButton.setVisible(false); // Inicialmente oculto
+
+        pared1ComboBox.setOnAction(e -> verificarSeleccion(pared1ComboBox, pared2ComboBox, pared3ComboBox, techoComboBox, aplicarButton));
+        pared1ComboBox.setOnAction(e -> verificarSeleccion(pared1ComboBox, pared2ComboBox, pared3ComboBox, techoComboBox, aplicarButton));
+        pared3ComboBox.setOnAction(e -> verificarSeleccion(pared1ComboBox, pared2ComboBox, pared3ComboBox, techoComboBox, aplicarButton));
+        techoComboBox.setOnAction(e -> verificarSeleccion(pared1ComboBox, pared2ComboBox, pared3ComboBox, techoComboBox, aplicarButton));
+        
+        aplicarButton.setOnAction(e -> {
+        configuracionIluminacion(pared1ComboBox.getValue(), pared2ComboBox.getValue(), pared3ComboBox.getValue(), techoComboBox.getValue(), wallLeft, wallBack);
+        secondaryStage.close();
+    });
+         
+
+        VBox secondaryLayout = new VBox();
+        secondaryLayout.setAlignment(Pos.CENTER);
+        secondaryLayout.getChildren().addAll(pared1Label, pared1ComboBox, pared2Label, pared2ComboBox, pared3Label, pared3ComboBox, techoLabel, techoComboBox, aplicarButton);
+
+        Scene iluminacionDialog = new Scene(secondaryLayout, 300, 200);
+        secondaryStage.setScene(iluminacionDialog);
+        secondaryStage.sizeToScene();
+        secondaryStage.setTitle("Opciones de Iluminación");
+        secondaryStage.show();
+    }
+
+    private void verificarSeleccion(ComboBox<String> pared1ComboBox, ComboBox<String> pared2ComboBox, ComboBox<String> pared3ComboBox, ComboBox<String> techoComboBox, Button aplicarButton) {
+        if (pared1ComboBox.getValue() != null && 
+            pared2ComboBox.getValue() != null && 
+            pared3ComboBox.getValue() != null && 
+            techoComboBox.getValue() != null) {
+            aplicarButton.setVisible(true);
+        } else {
+            aplicarButton.setVisible(false);
+        }    
+    }
+
+public void configuracionIluminacion(String pared1, String pared2, String pared3, String techo, Box wallLeft, Box wallBack) {
+    // Limpia las configuraciones de luz existentes si es necesario
+    root3D.getChildren().removeIf(node -> node instanceof PointLight);
+
+    // Aplicar configuración para Pared 1
+    if ("Bombillo".equals(pared1)) {
+        PointLight luzPared1 = new PointLight(Color.WHITE);
+        luzPared1.setTranslateX(wallBack.getTranslateX()); // Colocar la luz en la posición adecuada
+        luzPared1.setTranslateY(wallBack.getTranslateY()*0.8);
+        luzPared1.setTranslateZ(wallBack.getTranslateZ());
+        root3D.getChildren().add(luzPared1);
+    } else if ("Ventana".equals(pared1)) {
+        // Aquí podrías implementar una luz que simule la luz entrando por una ventana
+        // Esto podría ser una luz direccional o un PointLight más grande
+    }
+
+    // Repetir para las otras paredes y el techo
+    if ("Bombillo".equals(pared2)) {
+        PointLight luzPared2 = new PointLight(Color.WHITE);
+        luzPared2.setTranslateX(wallLeft.getTranslateX());
+        luzPared2.setTranslateY(-wallLeft.getTranslateY()*0.8);
+        luzPared2.setTranslateZ(wallLeft.getTranslateX());
+        root3D.getChildren().add(luzPared2);
+    }
+
+    if ("Bombillo".equals(pared3)) {
+        PointLight luzPared3 = new PointLight(Color.WHITE);
+        luzPared3.setTranslateX(-wallLeft.getTranslateX());
+        luzPared3.setTranslateY(-wallLeft.getTranslateY()*0.8);
+        luzPared3.setTranslateZ(wallLeft.getTranslateZ());
+        root3D.getChildren().add(luzPared3);
+    }
+
+    if ("Bombillo".equals(techo)) {
+        PointLight luzTecho = new PointLight(Color.WHITE);
+        luzTecho.setTranslateX(0);
+        luzTecho.setTranslateY(-wallLeft.getTranslateY());
+        luzTecho.setTranslateZ(0);
+        root3D.getChildren().add(luzTecho);
+    }
+}  
 
     public SubScene getSubScene() {
         return subScene;
