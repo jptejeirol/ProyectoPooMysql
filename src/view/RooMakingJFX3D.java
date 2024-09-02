@@ -1,0 +1,1684 @@
+package view;
+/**
+ *
+ * @author Gustavo Petro
+ */
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.geometry.Insets;
+import javafx.scene.Group;
+import javafx.geometry.Bounds;
+import javafx.scene.SubScene;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.control.MenuItem;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
+import javafx.scene.layout.HBox;
+import javafx.scene.shape.Box;
+import javafx.scene.shape.Cylinder;
+import javafx.scene.shape.Shape3D;
+import javafx.scene.shape.Sphere;
+import javafx.scene.PerspectiveCamera;
+import javafx.scene.transform.Rotate;
+import javafx.util.Duration;
+import javafx.geometry.Point3D;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+
+import javafx.scene.control.TextArea;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import controller.implement.Item;
+import controller.implement.Room;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
+import javafx.scene.transform.Transform;
+
+import controller.implement.RoomJFX;
+import controller.services.ServicesRoom;
+import controller.services.ServicesRoomJFX;
+import controller.services.ServicesUsuario;
+import java.util.Optional;
+import java.util.Random;
+import javafx.application.Platform;
+import javafx.scene.Cursor;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.cell.PropertyValueFactory;
+
+public class RooMakingJFX3D extends Application {
+
+    private PerspectiveCamera cameraExterna, cameraInterna;
+    private double mouseX, mouseY;
+    private double rotateX = 0, rotateY = 0;
+    private double rotateSpeed = 0.2;
+    private double zoomSpeed = 1.1;
+    private double gravity = 5;
+    private double floorY = 1000;
+    
+    private Group root3D;
+    private SubScene subScene;
+    private Shape3D selectedObject;
+    private Group selectedGroup;
+    private TextArea hashArea;
+    private double objectMouseOffsetX, objectMouseOffsetY, objectMouseOffsetZ;
+    
+    private List<Movible> shapes = new ArrayList<>(); //necesaria para fijar posiciones
+    private Movible selectedShape = null;
+    private boolean positionsLocked = false; // Variable para controlar el bloqueo de posiciones
+    
+    private Box floor;
+    private Box wallBack;
+    private Box wallLeft;
+    
+    public static Room roomSeleccionada;
+    private List<Item> ItemSeleccionados= new ArrayList<>();
+
+    public void setRoomSeleccionada(Room roomSeleccionada) {
+        this.roomSeleccionada = roomSeleccionada;
+    }
+ 
+    private ObjectMapper objectMapper = new ObjectMapper();
+            // Crear panel de control
+    VBox controlPanel= createControlPanel(subScene, cameraInterna, cameraExterna);
+    ServicesRoomJFX servRoomJFX = new ServicesRoomJFX();    
+
+    @Override
+    public void start(Stage primaryStage) {
+        // Crear la escena 3D
+        root3D = new Group();
+        subScene = new SubScene(root3D, 600, 400, true, javafx.scene.SceneAntialiasing.BALANCED);
+        subScene.setFill(Color.CADETBLUE);
+
+        // Configurar la cámara 1
+        cameraExterna = new PerspectiveCamera(true);
+        cameraExterna.setTranslateZ(-2000);
+        cameraExterna.setTranslateY(500);
+        cameraExterna.setNearClip(1);
+        cameraExterna.setFarClip(10000);
+        cameraExterna.setFieldOfView(50);
+        subScene.setCamera(cameraExterna);
+        
+        // Cámara interna
+        cameraInterna = new PerspectiveCamera(true);
+        cameraInterna.setNearClip(1);
+        cameraInterna.setFarClip(10000);
+        cameraInterna.setTranslateX(0); // Inicia dentro del cuarto
+        cameraInterna.setTranslateY(0);
+        cameraInterna.setTranslateZ(0);
+        cameraInterna.setRotationAxis(Rotate.Y_AXIS);  // Eje de rotación
+        cameraInterna.setRotate(0);  // Inicializa la rotación
+        
+        // Crear panel de control
+        VBox controlPanel = createControlPanel(subScene, cameraInterna, cameraExterna);
+        
+
+
+        // Crear objetos iniciales
+        //root3D.getChildren().addAll(floor, wallBack, wallLeft);
+
+        // Configurar los eventos del mouse para la subescena
+        subScene.setOnMousePressed(this::handleMousePressed);
+        subScene.setOnMouseDragged(this::handleMouseDragged);
+        subScene.setOnScroll(this::handleScroll);
+
+        
+
+        // Crear layout principal
+        HBox mainLayout = new HBox(10);
+        mainLayout.setPadding(new Insets(10));
+        mainLayout.getChildren().addAll(subScene, controlPanel);
+
+        // Crear la escena principal
+        Scene mainScene = new Scene(mainLayout);
+        
+        //metodo camara:
+        servRoomJFX.MoverCamara(subScene, cameraInterna);
+
+
+        // Solicitar el enfoque en el nodo raíz
+        root3D.requestFocus();
+
+        // Iniciar el sistema de física
+        startPhysics();
+        
+        floor = new Box(0, 0, 0);
+        wallBack = new Box(0, 0, 0);
+        wallLeft = new Box(0, 0, 0);    
+        
+        subScene.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal) {
+                System.out.println("La subescena tiene el enfoque.");
+            } else {
+                System.out.println("La subescena perdió el enfoque.");
+            }
+        });
+
+    }
+
+
+    private VBox createControlPanel(SubScene scene, PerspectiveCamera cameraInternal, PerspectiveCamera cameraExternal) {
+        VBox controlPanel = new VBox(10);       
+        controlPanel.setPadding(new Insets(10));
+        
+        Button switchCameraButton = new Button("Cambiar cámara");
+
+        switchCameraButton.setOnAction(event -> {
+            if (scene.getCamera() == cameraExternal) {
+                scene.setCamera(cameraInternal);
+                cameraInterna.setTranslateX(0); 
+                cameraInterna.setTranslateY(0);
+                cameraInterna.setTranslateZ(0);
+                cameraInterna.setRotate(0);
+                subScene.requestFocus();
+                
+            } else {
+                scene.setCamera(cameraExternal);
+                scene.setCursor(Cursor.DEFAULT);
+                subScene.requestFocus();
+            }
+        });
+        
+        Button roomButton = new Button("Crear Room");
+        roomButton.setOnAction(e -> showRoomDialog()) ; 
+        
+        Label titleLabel = new Label("Crear Item:");
+        ComboBox<String> objectSelector = new ComboBox<>();
+        objectSelector.getItems().addAll("Prisma", "Esfera", "Cilindro");
+        objectSelector.setOnAction(e -> showDimensionDialog(objectSelector.getValue()));       
+
+        Label groupLabel = new Label("Seleccionar Item:");
+        ComboBox<String> groupSelector = new ComboBox<>();
+        groupSelector.getItems().addAll("Cama Simple", "Cama Doble", "Mesa de Noche", "Armario", "Mueble", "Mesa", "Silla", "Televisor", "Televisor Grande");
+        groupSelector.setOnAction(e -> addGroup(groupSelector.getValue()));
+        
+        Button saveButton = new Button("Guardar");
+        saveButton.setOnAction(e -> {
+            // Crear un cuadro de diálogo para solicitar el nombre del Room
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Guardar Room");
+            dialog.setHeaderText("Ingrese el nombre para el Room:");
+            dialog.setContentText("Nombre:");
+
+            Optional<String> result = dialog.showAndWait();
+
+            result.ifPresent(roomName -> {
+                // Llamar al método para obtener el JSON codificado
+                String encodedJson = saveScene(); // Asegúrate de que saveScene() devuelva el JSON codificado como String
+
+                // Crear un objeto para guardar el nombre del Room y el JSON codificado
+                RoomJFX roomData = new RoomJFX(roomName, encodedJson);
+
+                // Aquí puedes guardar roomData en una lista, base de datos, etc.
+                servRoomJFX.guardar_Room(ServicesUsuario.getUsuario(), roomData);
+                ServicesRoomJFX.setRooms(roomData);           
+            });
+        });       
+
+        Button loadButton = new Button("Cargar");
+        loadButton.setOnAction(e -> showCargarDialog());        
+        
+        Button fijarobjetos = new Button("Fijar Objetos");
+        fijarobjetos.setOnAction(e -> {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Información");
+            alert.setHeaderText(null);
+            alert.setContentText("Ha entrado al modo fijar objetos, a partir de ahora podrá "
+                    + "posicionar los objetos donde quiere que se fijen.");
+            alert.showAndWait();
+
+            controlPanel.getChildren().removeAll(loadButton,saveButton);
+            Button hecho = new Button("hecho");
+            hecho.setOnAction(ev -> {
+            togglePositionsLock();
+  
+            controlPanel.getChildren().remove(hecho);            
+            controlPanel.getChildren().addAll(loadButton,saveButton);
+            });   
+            
+
+            // Agregar elementos actualizados
+            controlPanel.getChildren().add(hecho);
+            controlPanel.requestLayout(); // Forzar actualización de la disposición
+                });
+         });
+            Button agregarobjetos = new Button("agregar para ordenar");
+            agregarobjetos.setOnAction(e -> {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Información");
+            alert.setHeaderText(null);
+            alert.setContentText("Ha entrado al modo ordenar objetos, a partir de ahora podrá "
+                    + "agregar los objetos que desea que se ordenen.");
+            alert.showAndWait();
+            });
+            Button ordenarbtn = new Button("Ordenar");
+            ordenarbtn.setOnAction(ev -> {
+            OrdenarObjetos();
+            });   
+            
+
+            // Agregar elementos actualizados
+            controlPanel.getChildren().add(ordenarbtn);
+            controlPanel.requestLayout(); // Forzar actualización de la disposición
+            
+            });
+        controlPanel.getChildren().addAll(roomButton, titleLabel, objectSelector,fijarobjetos, groupLabel, groupSelector, saveButton, loadButton, agregarobjetos, switchCameraButton);
+        return controlPanel;
+    }
+    
+private void OrdenarObjetos() {
+    Random random = new Random();
+    //z=0 es a la derecha, x = 0 es al fondo
+    double rangoMinX = -2000; // Rango ajustado
+    double rangoMaxX = 2000;
+    double rangoMinZ = -2000; // Rango ajustado
+    double rangoMaxZ = 2000;
+    double margenSeguridad = 50; // Distancia mínima entre objetos para evitar solapamiento
+
+    List<Movible> colocados = new ArrayList<>();
+
+    for (javafx.scene.Node node : root3D.getChildren()) {
+        if (node instanceof Movible) {
+            Movible movible = (Movible) node;
+
+            if (!movible.isFijo()) { 
+                // Si fijo es false, saltar este objeto y no cambiar su posición
+                continue;
+            }
+
+            boolean solapado;
+            do {
+                solapado = false;
+                double nuevaX, nuevaZ;
+                // Elegir aleatoriamente si X o Z tendrá el valor 0 o 5000
+                if (random.nextBoolean()) {
+                    nuevaX = (random.nextBoolean()) ? rangoMinX : rangoMaxX;
+                    nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble();
+                } else {
+                    nuevaZ = (random.nextBoolean()) ? rangoMinZ : rangoMaxZ;
+                    nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
+                }
+                // Generar nuevas posiciones aleatorias
+                if (random.nextBoolean()) {
+                    // Si se elige que X sea diferente de 0 o 5000, Z debe ser 0 o 5000
+                    nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
+                    nuevaZ = (random.nextBoolean()) ? rangoMinZ : rangoMaxZ;
+                } else {
+                    // Si se elige que Z sea diferente de 0 o 5000, X debe ser 0 o 5000
+                    nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble();
+                    nuevaX = (random.nextBoolean()) ? rangoMinX : rangoMaxX;
+                }
+
+                // Verificar si la nueva posición solapa con algún objeto ya colocado
+                for (Movible colocado : colocados) {
+                    double distancia = Math.sqrt(Math.pow(colocado.getTranslateX() - nuevaX, 2) +
+                                                 Math.pow(colocado.getTranslateZ() - nuevaZ, 2));
+                    if (distancia < margenSeguridad) {
+                        solapado = true;
+                        break;
+                    }
+                }
+
+                if (!solapado) {
+                    // Colocar el objeto en la nueva posición
+                    System.out.println("en x"+nuevaX+"en z"+nuevaZ);
+                    movible.setTranslateX(nuevaX);
+                    movible.setTranslateZ(nuevaZ);
+                    movible.setTranslateY(0); // Asegurar que la posición en Y sea 0
+                    colocados.add(movible); // Añadir a la lista de objetos ya colocados
+                }
+
+            } while (solapado); // Repetir hasta encontrar una posición no solapada
+        }
+    }
+}
+        public abstract class Movible extends Group {
+        private boolean fijo = false;
+
+        public boolean isFijo() {
+            return fijo;
+        }
+
+        public void setFijo(boolean fijo) {
+            this.fijo = fijo;
+        }
+    }
+    
+   class Sphere3D extends Movible {
+        private Sphere sphere;
+        private boolean fijo;
+        public Sphere3D(double radius, Color color) {
+            this.fijo = true;
+            sphere = new Sphere(radius);
+            sphere.setMaterial(new PhongMaterial(color));
+            this.getChildren().add(sphere);
+        }
+            @Override
+    public boolean isFijo() {
+        return fijo;
+    }
+
+    @Override
+    public void setFijo(boolean fijo) {
+        this.fijo = fijo;
+    }
+    }
+
+    // Cylinder implementation
+    class Cylinder3D extends Movible {
+        private Cylinder cylinder;
+        private boolean fijo;
+
+        public Cylinder3D(double radius, double height, Color color) {
+            cylinder = new Cylinder(radius, height);
+            cylinder.setMaterial(new PhongMaterial(color));
+            this.getChildren().add(cylinder);
+                        this.fijo = true;
+        }
+                    @Override
+    public boolean isFijo() {
+        return fijo;
+    }
+
+    @Override
+    public void setFijo(boolean fijo) {
+        this.fijo = fijo;
+    }
+    }
+    
+    class CamaSimple extends Movible {
+        private boolean fijo;
+
+        public CamaSimple() {
+                        this.fijo = true;
+
+            // base
+            Box base = new Box(800, 400, 1800);
+            base.setMaterial(new PhongMaterial(Color.BLACK));
+
+            // colchon
+            Box colchon = new Box(700, 200, 1700);
+            colchon.setMaterial(new PhongMaterial(Color.RED));
+            colchon.setTranslateY(-300);
+
+            // Almohada
+            Box almohada = new Box(500, 120, 300);
+            almohada.setMaterial(new PhongMaterial(Color.WHITE));
+            almohada.setTranslateY(-450);
+            almohada.setTranslateZ(700);
+
+            // Añadir todos los elementos al grupo
+            this.getChildren().addAll(base, colchon, almohada);
+
+            // Posicionar el grupo en la escena (opcional)
+            this.setTranslateX(0);
+            this.setTranslateY(0);
+            this.setTranslateZ(0);
+        }
+        private CamaSimple createCamaSimple() {
+        return new CamaSimple();
+        }
+                            @Override
+    public boolean isFijo() {
+        return fijo;
+    }
+
+    @Override
+    public void setFijo(boolean fijo) {
+        this.fijo = fijo;
+    }
+    }
+
+    
+    class CamaDoble extends Movible{
+                private boolean fijo;
+
+        public CamaDoble(){
+                        this.fijo = true;
+
+        // base
+        Box base = new Box(1200, 400, 1800);
+        base.setMaterial(new PhongMaterial(Color.BLACK));
+
+        // colchon
+        Box colchon = new Box(1100, 200, 1900);
+        colchon.setMaterial(new PhongMaterial(Color.BLUE));
+        colchon.setTranslateY(-300);
+        
+        // Almohada
+        Box almohada = new Box(500, 120, 300);
+        almohada.setMaterial(new PhongMaterial(Color.WHITE));
+        almohada.setTranslateY(-450);
+        almohada.setTranslateZ(800);        
+
+        // Grupo
+        this.getChildren().addAll(base, colchon, almohada);
+
+        // Posicionar el grupo en la escena
+        this.setTranslateX(0);
+        this.setTranslateY(0);
+        this.setTranslateZ(0);
+
+    }
+        private CamaDoble createCamaDoble(){
+        return new CamaDoble();
+    }
+                            @Override
+    public boolean isFijo() {
+        return fijo;
+    }
+
+    @Override
+    public void setFijo(boolean fijo) {
+        this.fijo = fijo;
+    }
+    }
+    
+    class MesaDeNoche extends Movible {
+                private boolean fijo;
+
+        public MesaDeNoche(){
+                        this.fijo = true;
+
+        // Base
+        Box base = new Box(300, 700, 400);
+        base.setMaterial(new PhongMaterial(Color.BROWN));
+
+        // Cajón1
+        Box cajon1 = new Box(10, 280, 350);
+        cajon1.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        cajon1.setTranslateY(-160);
+        cajon1.setTranslateX(160);  
+        
+        Box cajon2 = new Box(10, 280, 350);
+        cajon2.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        cajon2.setTranslateY(150);
+        cajon2.setTranslateX(160);
+        
+        Box chapa2 = new Box(15, 30, 80);
+        chapa2.setMaterial(new PhongMaterial(Color.BROWN));
+        chapa2.setTranslateY(150);
+        chapa2.setTranslateX(180);
+        
+        Box chapa1 = new Box(15, 30, 80);
+        chapa1.setMaterial(new PhongMaterial(Color.BROWN));
+        chapa1.setTranslateY(-160);
+        chapa1.setTranslateX(180);
+
+        // Grupo
+        this.getChildren().addAll(base, cajon1, cajon2, chapa1, chapa2);
+    }
+        private MesaDeNoche createMesaDeNoche(){
+            return new MesaDeNoche();
+        }
+                            @Override
+    public boolean isFijo() {
+        return fijo;
+    }
+
+    @Override
+    public void setFijo(boolean fijo) {
+        this.fijo = fijo;
+    }
+    }
+    
+    class Armario extends Movible {
+                private boolean fijo;
+
+        public Armario(){
+                        this.fijo = true;
+
+        // Base
+        Box base = new Box(400, 2000, 1200);
+        base.setMaterial(new PhongMaterial(Color.BROWN));
+
+        // puerta1
+        Box puerta1 = new Box(10, 1800, 530);
+        puerta1.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        puerta1.setTranslateX(210);
+        puerta1.setTranslateZ(280);
+        
+        // puerta2
+        Box puerta2 = new Box(10, 1800, 530);
+        puerta2.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        puerta2.setTranslateX(210);
+        puerta2.setTranslateZ(-280);
+        
+        Box chapa2 = new Box(15, 80, 30);
+        chapa2.setMaterial(new PhongMaterial(Color.BROWN));
+        chapa2.setTranslateX(220);
+        chapa2.setTranslateZ(-80);
+        
+        Box chapa1 = new Box(15, 80, 30);
+        chapa1.setMaterial(new PhongMaterial(Color.BROWN));
+        chapa1.setTranslateX(220);
+        chapa1.setTranslateZ(80);
+
+        // Grupo
+        this.getChildren().addAll(base, puerta1, puerta2, chapa1, chapa2);
+
+    }
+        private Armario createArmario(){
+            return new Armario();
+        }
+                            @Override
+    public boolean isFijo() {
+        return fijo;
+    }
+
+    @Override
+    public void setFijo(boolean fijo) {
+        this.fijo = fijo;
+    }
+    }
+    
+    class Mueble extends Movible{
+                private boolean fijo;
+
+        public Mueble(){
+                        this.fijo = true;
+
+        // Base
+        Box base = new Box(300, 800, 1200);
+        base.setMaterial(new PhongMaterial(Color.BROWN));
+
+        // puerta1
+        Box puerta1 = new Box(10, 600, 530);
+        puerta1.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        puerta1.setTranslateX(160);
+        puerta1.setTranslateZ(300);
+        
+        // puerta2
+        Box puerta2 = new Box(10, 600, 530);
+        puerta2.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        puerta2.setTranslateX(160);
+        puerta2.setTranslateZ(-300);
+        
+        Box chapa2 = new Box(15, 30, 100);
+        chapa2.setMaterial(new PhongMaterial(Color.BROWN));
+        chapa2.setTranslateX(170);
+        chapa2.setTranslateZ(-300);
+        
+        Box chapa1 = new Box(15, 30, 100);
+        chapa1.setMaterial(new PhongMaterial(Color.BROWN));
+        chapa1.setTranslateX(170);
+        chapa1.setTranslateZ(300);
+
+        // Grupo
+        this.getChildren().addAll(base, puerta1, puerta2, chapa1, chapa2);
+    }
+        private Mueble createMueble(){
+            return new Mueble();
+        }
+                            @Override
+    public boolean isFijo() {
+        return fijo;
+    }
+
+    @Override
+    public void setFijo(boolean fijo) {
+        this.fijo = fijo;
+    }
+    }
+    
+    class Mesa extends Movible {
+                private boolean fijo;
+
+        public Mesa(){
+                        this.fijo = true;
+
+        // Base
+        Box base = new Box(800, 100, 800);
+        base.setMaterial(new PhongMaterial(Color.BROWN));
+        base.setTranslateY(-350);
+
+        // pata1
+        Box pata1 = new Box(100, 600, 100);
+        pata1.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        pata1.setTranslateX(350);
+        pata1.setTranslateZ(350);
+        
+        // pata2
+        Box pata2 = new Box(100, 600, 100);
+        pata2.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        pata2.setTranslateX(350);
+        pata2.setTranslateZ(-350);
+        
+        // pata3
+        Box pata3 = new Box(100, 600, 100);
+        pata3.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        pata3.setTranslateX(-350);
+        pata3.setTranslateZ(-350);
+        
+        // pata4
+        Box pata4 = new Box(100, 600, 100);
+        pata4.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        pata4.setTranslateX(-350);
+        pata4.setTranslateZ(350);
+
+        // Grupo
+        this.getChildren().addAll(base, pata1, pata2, pata3, pata4);
+        }
+        private Mesa createMesa(){
+            return new Mesa();
+        }
+                            @Override
+    public boolean isFijo() {
+        return fijo;
+    }
+
+    @Override
+    public void setFijo(boolean fijo) {
+        this.fijo = fijo;
+    }
+    }
+    
+    class Silla extends Movible{
+                private boolean fijo;
+
+        public Silla(){
+                        this.fijo = true;
+
+        // Base
+        Box base = new Box(400, 80, 400);
+        base.setMaterial(new PhongMaterial(Color.BROWN));
+        base.setTranslateY(-220);
+
+        // Espalda
+        Box espalda = new Box(70, 550, 400);
+        espalda.setMaterial(new PhongMaterial(Color.BROWN));
+        espalda.setTranslateX(-165);
+        espalda.setTranslateY(-530);
+
+        // pata1
+        Box pata1 = new Box(50, 360, 50);
+        pata1.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        pata1.setTranslateX(175);
+        pata1.setTranslateZ(175);
+        
+        // pata2
+        Box pata2 = new Box(50, 360, 50);
+        pata2.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        pata2.setTranslateX(175);
+        pata2.setTranslateZ(-175);
+        
+        // pata3
+        Box pata3 = new Box(50, 360, 50);
+        pata3.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        pata3.setTranslateX(-175);
+        pata3.setTranslateZ(-175);
+        
+        // pata4
+        Box pata4 = new Box(50, 360, 50);
+        pata4.setMaterial(new PhongMaterial(Color.DARKGRAY));
+        pata4.setTranslateX(-175);
+        pata4.setTranslateZ(175);
+
+        // Grupo
+        this.getChildren().addAll(base, espalda, pata1, pata2, pata3, pata4);
+        }
+        private Silla createSilla(){
+            return new Silla();
+        }
+                            @Override
+    public boolean isFijo() {
+        return fijo;
+    }
+
+    @Override
+    public void setFijo(boolean fijo) {
+        this.fijo = fijo;
+    }
+    }
+    
+    class TV extends Movible {
+                private boolean fijo;
+
+        public TV(){
+                        this.fijo = true;
+
+        // Base
+        Box base = new Box(80, 20, 160);
+        base.setMaterial(new PhongMaterial(Color.GRAY));
+        base.setTranslateY(210);
+        
+        // Base1
+        Box base1 = new Box(25, 50, 80);
+        base1.setMaterial(new PhongMaterial(Color.GRAY));
+        base1.setTranslateY(175);        
+        
+        // Pantalla
+        Box pantalla = new Box(25, 300, 600);
+        pantalla.setMaterial(new PhongMaterial(Color.BLACK));
+               
+
+        // Grupo
+        this.getChildren().addAll(base, base1, pantalla);
+        }
+        private TV createTV(){
+            return new TV();
+        }
+                            @Override
+    public boolean isFijo() {
+        return fijo;
+    }
+
+    @Override
+    public void setFijo(boolean fijo) {
+        this.fijo = fijo;
+    }
+    }   
+    
+    class TVGrande extends Movible{
+                private boolean fijo;
+
+        public TVGrande(){
+                        this.fijo = true;
+
+        // Base
+        Box base = new Box(80, 20, 160);
+        base.setMaterial(new PhongMaterial(Color.GRAY));
+        base.setTranslateY(360);
+        
+        // Base1
+        Box base1 = new Box(25, 50, 80);
+        base1.setMaterial(new PhongMaterial(Color.GRAY));
+        base1.setTranslateY(325);        
+        
+        // Pantalla
+        Box pantalla = new Box(25, 600, 1200);
+        pantalla.setMaterial(new PhongMaterial(Color.BLACK));
+               
+
+        // Grupo
+        this.getChildren().addAll(base, base1, pantalla);
+    }
+        private TVGrande createTVGrande(){
+            return new TVGrande();
+        }
+                            @Override
+    public boolean isFijo() {
+        return fijo;
+    }
+
+    @Override
+    public void setFijo(boolean fijo) {
+        this.fijo = fijo;
+    }
+    }
+
+
+    /*private void addObject(String objectType) {
+        Shape3D newObject = null;
+        switch (objectType) {
+            case "Prisma":
+                newObject = new Box(100, 100, 100);
+                break;
+            case "Esfera":
+                newObject = new Sphere(100);
+                break;
+            case "Cilindro":
+                newObject = new Cylinder(100, 100);
+                break;                
+        }
+        
+        if (newObject != null) {
+            newObject.setMaterial(new PhongMaterial(Color.color(Math.random(), Math.random(), Math.random())));
+            newObject.setTranslateX(0);
+            newObject.setTranslateY(-500);
+            newObject.setTranslateZ(0);
+            newObject.setOnMousePressed(this::handleObjectPressed);
+            newObject.setOnMouseDragged(this::handleObjectDragged);
+            newObject.setOnMouseReleased(event -> selectedObject = null);
+            setupContextMenu(newObject); // Configurar menú contextual
+            root3D.getChildren().add(newObject);
+        }
+    }
+    */
+    
+        private void showDimensionDialog(String objectType) {
+        Stage dialog = new Stage();
+        dialog.setTitle("Ingresar dimensiones para " + objectType);
+
+        VBox dialogVBox = new VBox(10);
+        dialogVBox.setPadding(new Insets(10));
+        
+        Label widthLabel = new Label("Ancho:");
+        TextField widthField = new TextField();
+        Label heightLabel = new Label("Altura:");
+        TextField heightField = new TextField();
+        Label depthLabel = new Label("Profundidad:");
+        TextField depthField = new TextField();
+        
+        if (objectType.equals("Cilindro")) {
+            depthLabel.setDisable(true);
+            depthField.setDisable(true);
+        } else if(objectType.equals("Esfera")) {
+            depthLabel.setDisable(true);
+            depthField.setDisable(true);
+            heightLabel.setDisable(true);
+            heightField.setDisable(true);
+        }
+        
+        Button createButton = new Button("Crear");
+        createButton.setOnAction(e -> {
+            try {
+                double width = Double.parseDouble(widthField.getText());
+                double height = objectType.equals("Esfera") ? width : Double.parseDouble(heightField.getText());
+                double depth = objectType.equals("Esfera") || objectType.equals("Cilindro") ? height : Double.parseDouble(depthField.getText());
+                addObject(objectType, width, height, depth);
+                dialog.close();
+            } catch (NumberFormatException ex) {
+                Alert alert = new Alert(AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("Dimensiones inválidas");
+                alert.setContentText("Por favor ingrese dimensiones válidas.");
+                alert.showAndWait();
+            }
+        });
+
+        dialogVBox.getChildren().addAll(widthLabel, widthField, heightLabel, heightField, depthLabel, depthField, createButton);
+
+        Scene dialogScene = new Scene(dialogVBox, 300, 250);
+        dialog.setScene(dialogScene);
+        dialog.show();
+    }
+
+        private void showRoomDialog() {
+            Stage dialog = new Stage();
+            dialog.setTitle("Elija la room sobre la cual desea trabajar");
+
+            // Crear una tabla con el tipo Room
+            TableView<Room> tableView = new TableView<>();
+
+            // Crear las columnas y configurar cómo se llenan
+
+            // Columna para el nombre de la Room
+            TableColumn<Room, String> column1 = new TableColumn<>("Room");
+            column1.setCellValueFactory(new PropertyValueFactory<>("nombreObjeto"));
+
+            // Columna para la Base
+            TableColumn<Room, Double> column2 = new TableColumn<>("Base");
+            column2.setCellValueFactory(new PropertyValueFactory<>("base"));
+
+            // Columna para la Altura
+            TableColumn<Room, Double> column3 = new TableColumn<>("Altura");
+            column3.setCellValueFactory(new PropertyValueFactory<>("altura"));
+
+            // Columna para la Profundidad
+            TableColumn<Room, Double> column4 = new TableColumn<>("Profundidad");
+            column4.setCellValueFactory(new PropertyValueFactory<>("profundidad"));
+
+            // Agregar las columnas a la tabla
+            tableView.getColumns().add(column1);
+            tableView.getColumns().add(column2);
+            tableView.getColumns().add(column3);
+            tableView.getColumns().add(column4);
+
+            // Configurar un tamaño mínimo para la tabla si es necesario
+            tableView.setPrefHeight(200);
+            tableView.setPrefWidth(500);
+
+            // Añadir las rooms a la tabla
+            for (Room room : ServicesRoom.getRooms()) {
+                tableView.getItems().add(room);
+            }
+            
+            // Añadir un listener para detectar la selección de la fila
+            tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+                if (newSelection != null) {
+                    setRoomSeleccionada(newSelection);
+                }
+            });
+
+            // Añadir la tabla a un VBox
+            
+
+            Button createButton = new Button("Crear");
+            createButton.setOnAction(e -> {
+                try {
+                    double width = roomSeleccionada.getBase();
+                    double height = roomSeleccionada.getAltura();
+                    double depth = roomSeleccionada.getProfundidad();
+
+                // Verificar si ya existen los objetos y eliminarlos si es necesario
+                if (floor != null) {
+                    root3D.getChildren().remove(floor);
+                }
+                if (wallBack != null) {
+                    root3D.getChildren().remove(wallBack);
+                }
+                if (wallLeft != null) {
+                    root3D.getChildren().remove(wallLeft);
+                }            
+
+                floor = createFloor(width, height, depth);
+                wallBack = createWallBack(width, height, depth);
+                wallLeft = createWallLeft(width, height, depth);
+
+                root3D.getChildren().addAll(floor, wallBack, wallLeft);                
+
+
+                    dialog.close();
+                } catch (NumberFormatException ex) {
+                    Alert alert = new Alert(AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Dimensiones inválidas");
+                    alert.setContentText("Por favor ingrese dimensiones válidas.");
+                    alert.showAndWait();
+                }
+            });
+            
+            VBox vbox = new VBox(tableView, createButton);
+            Scene dialogScene = new Scene(vbox, 300, 250);
+            dialog.setScene(dialogScene);
+            dialog.show();
+            
+        }
+
+    private Box createFloor(double width, double height, double depth) {
+        Box floor = new Box(width, 10, depth);
+        floor.setMaterial(new PhongMaterial(Color.GRAY));
+        floor.setTranslateY(floorY);
+        return floor;
+    }
+
+    private Box createWallBack(double width, double height, double depth) {
+        Box wallBack = new Box(width, height, 10);
+        wallBack.setMaterial(new PhongMaterial(Color.GRAY));
+        wallBack.setTranslateZ(depth/2);
+        return wallBack;
+    }
+
+    private Box createWallLeft(double width, double height, double depth) {
+        Box wallLeft = new Box(10, height, depth);
+        wallLeft.setMaterial(new PhongMaterial(Color.GRAY));
+        wallLeft.setTranslateX(-width/2);
+        return wallLeft;
+    }        
+
+    private void addObject(String objectType, double width, double height, double depth) {
+        Movible newObject = null;
+        switch (objectType) {
+            case "Prisma":
+                //newObject = new Box(width, height, depth);
+                break;
+            case "Esfera":
+                newObject = new Sphere3D(width, Color.RED);
+                break;
+            case "Cilindro":
+                newObject = new Cylinder3D(width/2, height, Color.GREEN);
+                break;                
+        }
+        
+        if (newObject != null) {
+            //newObject.setMaterial(new PhongMaterial(Color.color(Math.random(), Math.random(), Math.random())));
+            newObject.setTranslateX(0);
+            newObject.setTranslateY(-500);
+            newObject.setTranslateZ(0);
+            newObject.setOnMousePressed(this::handleObjectPressed);
+            newObject.setOnMouseDragged(this::handleObjectDragged);
+            newObject.setOnMouseReleased(event -> selectedObject = null);
+            setupContextMenu(newObject); // Configurar menú contextual
+            root3D.getChildren().add(newObject);
+        }
+    }       
+    
+    private void addGroup(String groupType) {
+        Movible newObject = null;
+        switch (groupType) {
+            case "Cama Simple":
+                newObject = new CamaSimple();
+                break;
+            case "Cama Doble":
+                newObject = new CamaDoble();
+                break;
+            case "Mesa de Noche":
+                newObject = new MesaDeNoche();
+                break;
+            case "Armario":
+                newObject = new Armario();
+                break;
+            case "Mueble":
+                newObject = new Mueble();
+                break;
+            case "Mesa":
+                newObject = new Mesa();
+                break;
+            case "Silla":
+                newObject = new Silla();
+                break;
+            case "Televisor":
+                newObject = new TV();
+                break;
+            case "Televisor Grande":
+                newObject = new TVGrande();
+                break;               
+        }
+
+        if (newObject != null) {
+            newObject.setTranslateX(0);
+            newObject.setTranslateY(-500);
+            newObject.setTranslateZ(0);
+            newObject.setOnMousePressed(this::handleGroupPressed);
+            newObject.setOnMouseDragged(this::handleGroupDragged);
+            setupContextMenu(newObject); // Configurar menú contextual
+            root3D.getChildren().add(newObject);
+        }
+    }
+
+    private Group cloneGroup(Group original) {
+        Group clone = new Group();
+        for (javafx.scene.Node node : original.getChildren()) {
+            if (node instanceof Box) {
+                Box originalBox = (Box) node;
+                Box boxClone = new Box(originalBox.getWidth(), originalBox.getHeight(), originalBox.getDepth());
+                boxClone.setMaterial(originalBox.getMaterial());
+                boxClone.setTranslateX(originalBox.getTranslateX());
+                boxClone.setTranslateY(originalBox.getTranslateY());
+                boxClone.setTranslateZ(originalBox.getTranslateZ());
+                clone.getChildren().add(boxClone);
+            }
+        }
+        return clone;
+    }
+
+
+    private void setupContextMenu(Shape3D object) {
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem removeItem = new MenuItem("Eliminar");
+        removeItem.setOnAction(e -> root3D.getChildren().remove(object));
+        
+        MenuItem rotateItem = new MenuItem("Rotar");
+        rotateItem.setOnAction(e -> rotateObjectY(object));
+        
+        contextMenu.getItems().addAll(removeItem, rotateItem);
+
+        object.setOnContextMenuRequested(e -> contextMenu.show(object, e.getScreenX(), e.getScreenY()));
+    }
+    
+    private void setupContextMenu(Group group) {
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem deleteItem = new MenuItem("Eliminar");
+        deleteItem.setOnAction(event -> root3D.getChildren().remove(group));
+        
+        MenuItem rotateItem = new MenuItem("Rotar");
+        rotateItem.setOnAction(e -> rotateObjectY(group));
+    
+        contextMenu.getItems().addAll(deleteItem, rotateItem);
+        
+        group.setOnContextMenuRequested(event -> 
+            contextMenu.show(group, event.getScreenX(), event.getScreenY())
+        );
+    }
+    
+    private void rotateObjectY(Shape3D object) {
+        Rotate rotate = new Rotate(90, Rotate.Y_AXIS);
+        object.getTransforms().add(rotate);
+    }    
+    
+    private void rotateObjectY(Group group) {
+        Rotate rotate = new Rotate(90, Rotate.Y_AXIS);
+        group.getTransforms().add(rotate);
+    }
+
+    private void handleObjectPressed(MouseEvent event) {
+        if (event.getButton() == MouseButton.PRIMARY) {
+            selectedShape = (Movible) event.getSource();
+            objectMouseOffsetX = selectedObject.getTranslateX() - event.getSceneX();
+            objectMouseOffsetY = selectedObject.getTranslateY() - event.getSceneY();
+            
+            if (event.isShiftDown()) {
+                objectMouseOffsetZ = selectedObject.getTranslateZ() - event.getSceneY();
+            }            
+        }
+        event.consume();
+    }
+
+    private void handleObjectDragged(MouseEvent event) {
+        if (selectedShape != null && !positionsLocked) {
+            Point3D newPosition = unproject(event.getSceneX(), event.getSceneY(), selectedShape.getTranslateZ());
+            selectedShape.setTranslateX(newPosition.getX());
+            selectedShape.setTranslateY(newPosition.getY());
+            
+            if (event.isShiftDown()) {
+                double newZ = selectedShape.getTranslateZ() + (event.getSceneY() - (selectedShape.getTranslateY() - objectMouseOffsetY));
+                selectedShape.setTranslateZ(newZ);
+            }            
+            
+        }
+        event.consume();
+    }
+    
+    /*private void handleGroupPressed(MouseEvent event) {
+        if (event.getButton() == MouseButton.PRIMARY && event.getSource() instanceof Group) {
+            //selectedObject = null; // No seleccionar un objeto individual
+            selectedGroup = (Group) event.getSource();
+            objectMouseOffsetX = selectedGroup.getTranslateX() - event.getSceneX();
+            objectMouseOffsetY = selectedGroup.getTranslateY() - event.getSceneY();
+        }
+        event.consume();
+    }*/
+    
+    private void handleGroupPressed(MouseEvent event) {
+        if (event.getButton() == MouseButton.PRIMARY && event.getSource() instanceof Movible) {
+            selectedShape = (Movible) event.getSource();
+
+            objectMouseOffsetX = selectedShape.getTranslateX() - event.getSceneX();
+            objectMouseOffsetY = selectedShape.getTranslateY() - event.getSceneY();
+
+            if (event.isShiftDown()) {
+                objectMouseOffsetZ = selectedShape.getTranslateZ() - event.getSceneY();
+            }
+        }
+        event.consume();
+    }
+
+    /*private void handleGroupDragged(MouseEvent event) {
+        if (selectedGroup != null) {
+            Point3D newPosition = unproject(event.getSceneX(), event.getSceneY(), selectedGroup.getTranslateZ());
+            selectedGroup.setTranslateX(newPosition.getX());
+            selectedGroup.setTranslateY(newPosition.getY());
+        }
+        event.consume();
+    }*/
+    
+    private void handleGroupDragged(MouseEvent event) {
+        if (selectedShape != null && !positionsLocked && selectedShape.isFijo()==true) {
+            // Calcular la nueva posición en X e Y
+            Point3D newPosition = unproject(event.getSceneX(), event.getSceneY(), selectedShape.getTranslateZ());
+            selectedShape.setTranslateX(newPosition.getX());
+            selectedShape.setTranslateY(newPosition.getY());
+
+            // Si se está presionando Shift, permitir mover en el eje Z
+            if (event.isShiftDown()) {
+                double newZ = selectedShape.getTranslateZ() + (event.getSceneY() - (selectedShape.getTranslateY() - objectMouseOffsetY));
+                selectedShape.setTranslateZ(newZ);
+            }
+        }
+        event.consume();
+    }
+
+    private void togglePositionsLock() {
+        for (javafx.scene.Node node : root3D.getChildren()) {
+            if (node instanceof Movible) {
+                Movible movible = (Movible) node;
+                movible.setFijo(!movible.isFijo()); // Alternar el estado de "fijo"
+            }
+        }
+    }
+
+    private void handleMousePressed(MouseEvent event) {
+        mouseX = event.getSceneX();
+        mouseY = event.getSceneY();
+    }
+
+    private void handleMouseDragged(MouseEvent event) {
+        if (selectedObject == null) {
+            double deltaX = event.getSceneX() - mouseX;
+            double deltaY = event.getSceneY() - mouseY;
+            rotateGroup(deltaX, deltaY);
+        }
+
+        mouseX = event.getSceneX();
+        mouseY = event.getSceneY();
+    }
+
+    private void rotateGroup(double deltaX, double deltaY) {
+        rotateX += deltaX * rotateSpeed;
+        rotateY -= deltaY * rotateSpeed;
+        rotateY = Math.max(-89, Math.min(89, rotateY));
+
+        root3D.getTransforms().clear();
+        root3D.getTransforms().addAll(
+            new Rotate(rotateX, Rotate.Y_AXIS),
+            new Rotate(rotateY, Rotate.X_AXIS)
+        );
+    }
+
+    private Point3D unproject(double sceneX, double sceneY, double z) {
+        double subSceneX = sceneX - subScene.getLayoutX();
+        double subSceneY = sceneY - subScene.getLayoutY();
+
+        double normalizedX = (subSceneX / subScene.getWidth()) * 2 - 1;
+        double normalizedY = -((subSceneY / subScene.getHeight()) * 2 - 1);
+
+        Point3D clipPoint = new Point3D(normalizedX, normalizedY, -1);
+
+        Point3D viewPoint = cameraExterna.localToScene(clipPoint);
+        viewPoint = cameraExterna.sceneToLocal(viewPoint);
+
+        Point3D worldPoint = new Point3D(viewPoint.getX() * -cameraExterna.getTranslateZ(), 
+                                         viewPoint.getY() * cameraExterna.getTranslateZ(), 
+                                         z);
+
+        Rotate rxInverse = new Rotate(-rotateY, Rotate.X_AXIS);
+        Rotate ryInverse = new Rotate(-rotateX, Rotate.Y_AXIS);
+        worldPoint = rxInverse.transform(worldPoint);
+        worldPoint = ryInverse.transform(worldPoint);
+
+        return worldPoint;
+    }
+
+    private void handleScroll(ScrollEvent event) {
+        double delta = event.getDeltaY();
+        cameraExterna.setTranslateZ(cameraExterna.getTranslateZ() + delta * zoomSpeed);
+    }
+
+private void startPhysics() {
+    Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), e -> {
+        for (javafx.scene.Node node : root3D.getChildren()) {
+            if ((node instanceof Shape3D || node instanceof Group) && node != selectedObject) {
+                applyGravity(node);
+                detectCollisions(node);
+            }
+        }
+    }));
+    timeline.setCycleCount(Timeline.INDEFINITE);
+    timeline.play();
+}
+
+private void applyGravity(javafx.scene.Node node) {
+    if (node instanceof Group) {
+        for (javafx.scene.Node child : ((Group) node).getChildren()) {
+            double bottomY = child.getTranslateY() + getObjectHeight(child) / 2 + node.getTranslateY();
+            if (bottomY < floorY) {
+                node.setTranslateY(node.getTranslateY() + gravity);
+            } else {
+                node.setTranslateY(floorY - getObjectHeight(child) / 2);
+            }
+        }
+    } else {
+        double bottomY = node.getTranslateY() + getObjectHeight(node) / 2;
+        if (bottomY < floorY) {
+            node.setTranslateY(node.getTranslateY() + gravity);
+        } else {
+            node.setTranslateY(floorY - getObjectHeight(node) / 2);
+        }
+    }
+}
+
+private double getObjectHeight(javafx.scene.Node node) {
+    if (node instanceof Box) {
+        return ((Box) node).getHeight();
+    } else if (node instanceof Sphere) {
+        return ((Sphere) node).getRadius() * 2;
+    } else if (node instanceof Cylinder) {
+        return ((Cylinder) node).getHeight();
+    } else if (node instanceof Group) {
+        double maxHeight = 0;
+        double grHeight = 0;
+        for (javafx.scene.Node child : ((Group) node).getChildren()) {
+            if (child instanceof Box) {
+                grHeight = ((Box) node).getHeight() + node.getTranslateY();
+                return grHeight;
+            } else if (child instanceof Sphere) {
+                grHeight = ((Sphere) node).getRadius() * 2 + node.getTranslateY();
+                return grHeight;
+            } else if (child instanceof Cylinder) {
+                grHeight = ((Cylinder) node).getHeight() + node.getTranslateY();
+                return grHeight;
+            }
+            maxHeight = Math.max(maxHeight, grHeight);            
+        }
+        return maxHeight;
+    }
+    return 0;
+}
+
+private void detectCollisions(javafx.scene.Node node) {
+    for (javafx.scene.Node otherNode : root3D.getChildren()) {
+        if (node != otherNode && (otherNode instanceof Shape3D || otherNode instanceof Group)) {
+            if (isColliding(node, otherNode)) {
+                resolveCollision(node, otherNode);
+            }
+        }
+    }
+}
+
+private boolean isColliding(javafx.scene.Node node1, javafx.scene.Node node2) {
+    // Obtener las Bounding Boxes de los nodos
+    Bounds bounds1 = node1.getBoundsInParent();
+    Bounds bounds2 = node2.getBoundsInParent();
+
+    // Comprobar si las Bounding Boxes se intersectan
+    return bounds1.intersects(bounds2);
+}
+
+
+private void resolveCollision(javafx.scene.Node node1, javafx.scene.Node node2) {
+    Bounds bounds1 = node1.getBoundsInParent();
+    Bounds bounds2 = node2.getBoundsInParent();
+
+    // Calcular las diferencias en las posiciones de los nodos
+    double diffX = bounds1.getCenterX() - bounds2.getCenterX();
+    double diffY = bounds1.getCenterY() - bounds2.getCenterY();
+    double diffZ = bounds1.getCenterZ() - bounds2.getCenterZ();
+
+    // Calcular la superposición en cada eje
+    double overlapX = (bounds1.getWidth() + bounds2.getWidth()) / 2 - Math.abs(diffX);
+    double overlapY = (bounds1.getHeight() + bounds2.getHeight()) / 2 - Math.abs(diffY);
+    double overlapZ = (bounds1.getDepth() + bounds2.getDepth()) / 2 - Math.abs(diffZ);
+
+    if (((node1 == floor || node2 == floor) || (node1 == wallBack || node2 == wallBack) || (node1 == wallLeft || node2 == wallLeft)) 
+            && ((floor != null) && (wallBack != null) && (wallLeft != null))) {
+        node1.setTranslateY(node1.getTranslateY() - 1);
+        node2.setTranslateY(node2.getTranslateY() + 1);
+    } else {    
+        // Asegurarse de que hay una colisión en algún eje
+        if (overlapX > 0 && overlapY > 0 && overlapZ > 0) {
+            // Encuentra el eje con la menor superposición para mover el nodo en esa dirección
+            if (overlapX < overlapY && overlapX < overlapZ) {
+                double adjustment = overlapX / 2;
+                if (diffX > 0) {
+                    node1.setTranslateX(node1.getTranslateX() + adjustment);
+                    node2.setTranslateX(node2.getTranslateX() - adjustment);
+                } else {
+                    node1.setTranslateX(node1.getTranslateX() - adjustment);
+                    node2.setTranslateX(node2.getTranslateX() + adjustment);
+                }
+            } else if (overlapY < overlapX && overlapY < overlapZ) {
+                double adjustment = overlapY / 2;
+                if (diffY > 0) {
+                    node1.setTranslateY(node1.getTranslateY() + adjustment);
+                    node2.setTranslateY(node2.getTranslateY() - adjustment);
+                } else {
+                    node1.setTranslateY(node1.getTranslateY() - adjustment);
+                    node2.setTranslateY(node2.getTranslateY() + adjustment);
+                }
+            } else {
+                double adjustment = overlapZ / 2;
+                if (diffZ > 0) {
+                    node1.setTranslateZ(node1.getTranslateZ() + adjustment);
+                    node2.setTranslateZ(node2.getTranslateZ() - adjustment);
+                } else {
+                    node1.setTranslateZ(node1.getTranslateZ() - adjustment);
+                    node2.setTranslateZ(node2.getTranslateZ() + adjustment);
+                }
+            }
+        }
+    }
+}    
+
+    private String saveScene() {
+        Map<String, Object> sceneData = new HashMap<>();
+        List<Map<String, Object>> objectsData = new ArrayList<>();
+
+        for (javafx.scene.Node node : root3D.getChildren()) {
+            if (node instanceof Shape3D || node instanceof Group) {
+                objectsData.add(encodeObject(node));
+            }
+        }
+
+        sceneData.put("objects", objectsData);
+
+        try {
+            String json = objectMapper.writeValueAsString(sceneData);
+            String encodedJson = Base64.getEncoder().encodeToString(json.getBytes());
+            
+            // Aquí puedes guardar 'encodedJson' en un archivo o mostrarlo al usuario
+            System.out.println("Escena guardada: " + encodedJson);
+            return encodedJson;
+        } catch (JsonProcessingException e) { 
+            return null;
+        }
+        
+    }
+
+    private void loadScene(String encodedJson) {
+        // Aquí deberías obtener el 'encodedJson' desde un archivo o entrada del usuario
+        try {
+            byte[] decodedBytes = Base64.getDecoder().decode(encodedJson);
+            String json = new String(decodedBytes);
+            Map<String, Object> sceneData = objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
+
+            root3D.getChildren().clear();
+            List<Map<String, Object>> objectsData = (List<Map<String, Object>>) sceneData.get("objects");
+            for (Map<String, Object> objectData : objectsData) {
+                javafx.scene.Node node = decodeObject(objectData);
+                if (node != null) {
+                    root3D.getChildren().add(node);
+                }
+            }
+        } catch (JsonProcessingException e) {
+        }
+    }
+
+    private Map<String, Object> encodeObject(javafx.scene.Node node) {
+        Map<String, Object> objectData = new HashMap<>();
+        objectData.put("type", node.getClass().getSimpleName());
+        objectData.put("translateX", node.getTranslateX());
+        objectData.put("translateY", node.getTranslateY());
+        objectData.put("translateZ", node.getTranslateZ());
+
+        switch (node) {
+            case Shape3D shape -> {
+                PhongMaterial material = (PhongMaterial) shape.getMaterial();
+                Color color = (Color) material.getDiffuseColor();
+                objectData.put("color", String.format("#%02X%02X%02X",
+                        (int) (color.getRed() * 255),
+                        (int) (color.getGreen() * 255),
+                        (int) (color.getBlue() * 255)));
+                
+                switch (shape) {
+                    case Box box -> {
+                        objectData.put("width", box.getWidth());
+                        objectData.put("height", box.getHeight());
+                        objectData.put("depth", box.getDepth());
+                    }
+                    case Sphere sphere -> objectData.put("radius", sphere.getRadius());
+                    case Cylinder cylinder -> {
+                        objectData.put("radius", cylinder.getRadius());
+                        objectData.put("height", cylinder.getHeight());
+                    }
+                    default -> {
+                    }
+                }
+            }
+            case Group group -> {
+                List<Map<String, Object>> childrenData = new ArrayList<>();
+                for (javafx.scene.Node child : group.getChildren()) {
+                    childrenData.add(encodeObject(child));
+                }
+                objectData.put("children", childrenData);
+            }
+            default -> {
+            }
+        }
+
+        List<Map<String, Object>> transformsData = new ArrayList<>();
+        for (Transform transform : node.getTransforms()) {
+            Map<String, Object> transformData = new HashMap<>();
+            transformData.put("type", transform.getClass().getSimpleName());
+            if (transform instanceof Rotate rotate) {
+                transformData.put("angle", rotate.getAngle());
+                transformData.put("pivotX", rotate.getPivotX());
+                transformData.put("pivotY", rotate.getPivotY());
+                transformData.put("pivotZ", rotate.getPivotZ());
+                Point3D axis = rotate.getAxis();
+                transformData.put("axisX", axis.getX());
+                transformData.put("axisY", axis.getY());
+                transformData.put("axisZ", axis.getZ());
+            }
+            transformsData.add(transformData);
+        }
+        objectData.put("transforms", transformsData);
+
+        return objectData;
+    }
+
+
+    private javafx.scene.Node decodeObject(Map<String, Object> objectData) {
+        String type = (String) objectData.get("type");
+        javafx.scene.Node node = null;
+
+        switch (type) {
+            case "Box" -> node = new Box(
+                    (double) objectData.get("width"),
+                    (double) objectData.get("height"),
+                    (double) objectData.get("depth")
+                );
+            case "Sphere" -> node = new Sphere((double) objectData.get("radius"));
+            case "Cylinder" -> node = new Cylinder(
+                    (double) objectData.get("radius"),
+                    (double) objectData.get("height")
+                );
+            case "Group" -> {
+                Group group = new Group();
+                List<Map<String, Object>> childrenData = (List<Map<String, Object>>) objectData.get("children");
+                for (Map<String, Object> childData : childrenData) {
+                    javafx.scene.Node child = decodeObject(childData);
+                    if (child != null) {
+                        group.getChildren().add(child);
+                    }
+                }
+                node = group;
+            }
+        }
+
+        if (node != null) {
+            node.setTranslateX((double) objectData.get("translateX"));
+            node.setTranslateY((double) objectData.get("translateY"));
+            node.setTranslateZ((double) objectData.get("translateZ"));
+
+            if (node instanceof Shape3D shape) {
+                String colorStr = (String) objectData.get("color");
+                Color color = Color.web(colorStr);
+                shape.setMaterial(new PhongMaterial(color));
+            }
+
+           List<Map<String, Object>> transformsData = (List<Map<String, Object>>) objectData.get("transforms");
+            for (Map<String, Object> transformData : transformsData) {
+                String transformType = (String) transformData.get("type");
+                if ("Rotate".equals(transformType)) {
+                    double angle = (double) transformData.get("angle");
+                    double pivotX = (double) transformData.get("pivotX");
+                    double pivotY = (double) transformData.get("pivotY");
+                    double pivotZ = (double) transformData.get("pivotZ");
+                    double axisX = (double) transformData.get("axisX");
+                    double axisY = (double) transformData.get("axisY");
+                    double axisZ = (double) transformData.get("axisZ");
+                    Point3D axis = new Point3D(axisX, axisY, axisZ);
+                    Rotate rotate = new Rotate(angle, pivotX, pivotY, pivotZ, axis);
+                    node.getTransforms().add(rotate);
+                }
+            }
+
+            switch (node) {
+                case Shape3D shape3D -> setupContextMenu(shape3D);
+                case Group group -> setupContextMenu(group);
+                default -> {
+                }
+            }
+        }
+
+        return node;
+    }
+    
+    private void showCargarDialog() {
+        Stage secondaryStage = new Stage();
+
+        Map<String, List<String>> resultado = cargarOpcionesDesdeBD(); // Método ficticio para cargar desde la BD
+        List<String> opciones = resultado.get("opciones");
+        List<String> hashes = resultado.get("hashes");
+        
+        ComboBox<String> roomComboBox = new ComboBox<>();
+        roomComboBox.getItems().addAll(opciones);
+
+        Button cargarRoomButton = new Button("Cargar Room");
+        cargarRoomButton.setVisible(false); // Inicialmente oculto
+
+        roomComboBox.setOnAction(e -> {
+            // Muestra el botón cuando se selecciona una opción
+            if (roomComboBox.getValue() != null) {
+                cargarRoomButton.setVisible(true);
+            }
+        });
+         
+        roomComboBox.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
+            // Verifica si el nuevo valor no es null y es válido
+            if (newValue.intValue() != -1) {
+                int indiceSeleccionado = newValue.intValue();
+                // Obtener el hash correspondiente al índice seleccionado
+                String elemento = hashes.get(indiceSeleccionado);
+                cargarRoomButton.setOnAction(e -> loadScene(elemento));
+            }
+        });   
+
+        VBox secondaryLayout = new VBox(10);
+        secondaryLayout.getChildren().addAll(new Label("Selecciona una opción"), roomComboBox, cargarRoomButton);
+
+        Scene secondaryScene = new Scene(secondaryLayout, 300, 200);
+        secondaryStage.setScene(secondaryScene);
+        secondaryStage.setTitle("Cargar Room");
+        secondaryStage.show();
+    }
+
+    // Método ficticio para cargar opciones desde la base de datos
+private Map<String, List<String>> cargarOpcionesDesdeBD() {
+    List<RoomJFX> rooms = servRoomJFX.getRoomsJFXByUsuario(ServicesUsuario.getUsuario());
+    
+    // Verifica si la lista de habitaciones está vacía
+    if (rooms.isEmpty()) {
+        System.out.println("No se encontraron habitaciones para el usuario.");
+    } else {
+        // Iterar sobre las habitaciones obtenidas
+        for (RoomJFX room : rooms) {
+            ServicesRoomJFX.setRooms(room);
+            System.out.println("Habitación: " + room.getNombre());
+        }
+    }
+
+    List<String> opciones = new ArrayList<>();
+    List<String> hashes = new ArrayList<>();
+    
+    // Verifica si la lista de habitaciones en ServicesRoomJFX está vacía
+    List<RoomJFX> savedRooms = ServicesRoomJFX.getRooms();
+    if (savedRooms.isEmpty()) {
+        System.out.println("No se encontraron habitaciones guardadas.");
+    } else {
+        // Iterar sobre las habitaciones guardadas
+        for (RoomJFX room : savedRooms) {
+            opciones.add(room.getNombre());
+            hashes.add(room.getHash());
+        }
+    }
+
+    // Crear el resultado y añadir las listas
+    Map<String, List<String>> resultado = new HashMap<>();
+    resultado.put("opciones", opciones);
+    resultado.put("hashes", hashes);
+
+    return resultado;
+}
+
+ private void ordenarMuebles() {
+    Random random = new Random();
+
+}   
+
+    public SubScene getSubScene() {
+        return subScene;
+    }
+
+}
