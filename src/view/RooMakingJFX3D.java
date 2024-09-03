@@ -62,6 +62,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Modality;
 
 public class RooMakingJFX3D extends Application {
 
@@ -1595,7 +1596,7 @@ private void resolveCollision(javafx.scene.Node node1, javafx.scene.Node node2) 
         List<Map<String, Object>> objectsData = new ArrayList<>();
 
         for (javafx.scene.Node node : root3D.getChildren()) {
-            if (node instanceof Shape3D || node instanceof Group) {
+            if (node instanceof Shape3D || node instanceof Group || node instanceof Movible) {
                 objectsData.add(encodeObject(node));
             }
         }
@@ -1724,6 +1725,105 @@ private void resolveCollision(javafx.scene.Node node1, javafx.scene.Node node2) 
                 }
                 node = group;
             }
+            case "MesaDeNoche" -> {
+                MesaDeNoche mesaDeNoche = new MesaDeNoche();
+                List<Map<String, Object>> childrenData = (List<Map<String, Object>>) objectData.get("children");
+                for (Map<String, Object> childData : childrenData) {
+                    javafx.scene.Node child = decodeObject(childData);
+                    if (child != null) {
+                        mesaDeNoche.getChildren().add(child);
+                    }
+                }
+                node = mesaDeNoche;
+            }
+            case "Mueble" -> {
+                Mueble mueble = new Mueble();
+                List<Map<String, Object>> childrenData = (List<Map<String, Object>>) objectData.get("children");
+                for (Map<String, Object> childData : childrenData) {
+                    javafx.scene.Node child = decodeObject(childData);
+                    if (child != null) {
+                        mueble.getChildren().add(child);
+                    }
+                }
+                node = mueble;
+            }
+            case "Armario" -> {
+                Armario armario = new Armario();
+                List<Map<String, Object>> childrenData = (List<Map<String, Object>>) objectData.get("children");
+                for (Map<String, Object> childData : childrenData) {
+                    javafx.scene.Node child = decodeObject(childData);
+                    if (child != null) {
+                        armario.getChildren().add(child);
+                    }
+                }
+                node = armario;
+            }
+            case "Mesa" -> {
+                Mesa mesa = new Mesa();
+                List<Map<String, Object>> childrenData = (List<Map<String, Object>>) objectData.get("children");
+                for (Map<String, Object> childData : childrenData) {
+                    javafx.scene.Node child = decodeObject(childData);
+                    if (child != null) {
+                        mesa.getChildren().add(child);
+                    }
+                }
+                node = mesa;
+            }
+            case "Silla" -> {
+                Silla silla = new Silla();
+                List<Map<String, Object>> childrenData = (List<Map<String, Object>>) objectData.get("children");
+                for (Map<String, Object> childData : childrenData) {
+                    javafx.scene.Node child = decodeObject(childData);
+                    if (child != null) {
+                        silla.getChildren().add(child);
+                    }
+                }
+                node = silla;
+            }
+            case "CamaSimple" -> {
+                CamaSimple camaSimple = new CamaSimple();
+                List<Map<String, Object>> childrenData = (List<Map<String, Object>>) objectData.get("children");
+                for (Map<String, Object> childData : childrenData) {
+                    javafx.scene.Node child = decodeObject(childData);
+                    if (child != null) {
+                        camaSimple.getChildren().add(child);
+                    }
+                }
+                node = camaSimple;
+            }
+            case "CamaDoble" -> {
+                CamaDoble camaDoble = new CamaDoble();
+                List<Map<String, Object>> childrenData = (List<Map<String, Object>>) objectData.get("children");
+                for (Map<String, Object> childData : childrenData) {
+                    javafx.scene.Node child = decodeObject(childData);
+                    if (child != null) {
+                        camaDoble.getChildren().add(child);
+                    }
+                }
+                node = camaDoble;
+            }
+            case "TV" -> {
+                TV tv = new TV();
+                List<Map<String, Object>> childrenData = (List<Map<String, Object>>) objectData.get("children");
+                for (Map<String, Object> childData : childrenData) {
+                    javafx.scene.Node child = decodeObject(childData);
+                    if (child != null) {
+                        tv.getChildren().add(child);
+                    }
+                }
+                node = tv;
+            }
+            case "TVGrande" -> {
+                TVGrande tvGrande = new TVGrande();
+                List<Map<String, Object>> childrenData = (List<Map<String, Object>>) objectData.get("children");
+                for (Map<String, Object> childData : childrenData) {
+                    javafx.scene.Node child = decodeObject(childData);
+                    if (child != null) {
+                        tvGrande.getChildren().add(child);
+                    }
+                }
+                node = tvGrande;
+            }             
         }
 
         if (node != null) {
@@ -1766,43 +1866,80 @@ private void resolveCollision(javafx.scene.Node node1, javafx.scene.Node node2) 
     }
     
     private void showCargarDialog() {
-        Stage secondaryStage = new Stage();
+    Stage secondaryStage = new Stage();
+    
+    Map<String, List<String>> resultado = cargarOpcionesDesdeBD(); // Método ficticio para cargar desde la BD
+    List<String> opciones = resultado.get("opciones");
+    List<String> hashes = resultado.get("hashes");
+    
+    ComboBox<String> roomComboBox = new ComboBox<>();
+    roomComboBox.getItems().addAll(opciones);
+    roomComboBox.setStyle(
+        "-fx-background-color: linear-gradient(to bottom, rgb(245,245,245), rgb(210,210,210));" + // Degradado de gris claro
+        "-fx-border-color: rgb(200,200,200);" +  // Borde gris claro
+        "-fx-border-radius: 5;" +  // Bordes redondeados
+        "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
+    );
+    roomComboBox.setPromptText("Selecciona una opción");
 
-        Map<String, List<String>> resultado = cargarOpcionesDesdeBD(); // Método ficticio para cargar desde la BD
-        List<String> opciones = resultado.get("opciones");
-        List<String> hashes = resultado.get("hashes");
-        
-        ComboBox<String> roomComboBox = new ComboBox<>();
-        roomComboBox.getItems().addAll(opciones);
+    Button cargarRoomButton = new Button("Cargar Room");
+    cargarRoomButton.setStyle(
+        "-fx-background-color: linear-gradient(to bottom, rgb(126,188,137), rgb(162,217,206));" + // Degradado verde
+        "-fx-text-fill: white;" +  // Texto blanco
+        "-fx-font-weight: bold;" +  // Texto en negrita
+        "-fx-border-color: rgb(126,188,137);" +  // Borde verde
+        "-fx-border-radius: 5;" +  // Bordes redondeados
+        "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
+    );
+    cargarRoomButton.setVisible(false); // Inicialmente oculto
 
-        Button cargarRoomButton = new Button("Cargar Room");
-        cargarRoomButton.setVisible(false); // Inicialmente oculto
+    roomComboBox.setOnAction(e -> {
+        // Muestra el botón cuando se selecciona una opción
+        if (roomComboBox.getValue() != null) {
+            cargarRoomButton.setVisible(true);
+        }
+    });
+     
+    roomComboBox.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
+        // Verifica si el nuevo valor no es null y es válido
+        if (newValue.intValue() != -1) {
+            int indiceSeleccionado = newValue.intValue();
+            // Obtener el hash correspondiente al índice seleccionado
+            String elemento = hashes.get(indiceSeleccionado);
+            cargarRoomButton.setOnAction(e -> {
+                loadScene(elemento);
+                secondaryStage.close();        
+            });
+        }
+    });   
 
-        roomComboBox.setOnAction(e -> {
-            // Muestra el botón cuando se selecciona una opción
-            if (roomComboBox.getValue() != null) {
-                cargarRoomButton.setVisible(true);
-            }
-        });
-         
-        roomComboBox.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
-            // Verifica si el nuevo valor no es null y es válido
-            if (newValue.intValue() != -1) {
-                int indiceSeleccionado = newValue.intValue();
-                // Obtener el hash correspondiente al índice seleccionado
-                String elemento = hashes.get(indiceSeleccionado);
-                cargarRoomButton.setOnAction(e -> loadScene(elemento));
-            }
-        });   
+    VBox secondaryLayout = new VBox(10);
+    secondaryLayout.setPadding(new Insets(15));
+    secondaryLayout.setStyle(
+        "-fx-background-color: rgb(245,245,220);" +  
+        "-fx-padding: 15;" +  // Espaciado interno
+        "-fx-border-color: rgb(200,200,200);" +  // Borde gris claro
+        "-fx-border-width: 2px;" +  // Grosor del borde
+        "-fx-border-radius: 10px;"  // Bordes redondeados
+    );
+    secondaryLayout.getChildren().addAll(
+        new Label("Rooms Guardadas:") {{
+            setStyle(
+                "-fx-font-size: 16px;" +  // Tamaño de fuente
+                "-fx-font-weight: bold;" +  // Negrita
+                "-fx-text-fill: rgb(0,0,0);"  // Color del texto
+            );
+        }},
+        roomComboBox,
+        cargarRoomButton
+    );
 
-        VBox secondaryLayout = new VBox(10);
-        secondaryLayout.getChildren().addAll(new Label("Selecciona una opción"), roomComboBox, cargarRoomButton);
-
-        Scene secondaryScene = new Scene(secondaryLayout, 300, 200);
-        secondaryStage.setScene(secondaryScene);
-        secondaryStage.setTitle("Cargar Room");
-        secondaryStage.show();
-    }
+    Scene secondaryScene = new Scene(secondaryLayout, 300, 200);
+    secondaryStage.setScene(secondaryScene);
+    secondaryStage.setTitle("Cargar Room");
+    secondaryStage.initModality(Modality.APPLICATION_MODAL); // Bloquea interacción con otras ventanas mientras está abierto
+    secondaryStage.show();
+}
 
     // Método ficticio para cargar opciones desde la base de datos
 private Map<String, List<String>> cargarOpcionesDesdeBD() {
