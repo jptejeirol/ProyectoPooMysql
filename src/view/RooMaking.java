@@ -1,9 +1,5 @@
 package view;
 
-/**
- *
- * @author julia
- */
 
 import java.awt.BorderLayout;
 import javafx.application.Platform;
@@ -16,28 +12,28 @@ public class RooMaking extends javax.swing.JFrame {
     private JFXPanel fxPanel;
 
     public RooMaking() {
-        
         initComponents();
         initFXPanel();
+        
     }
     
-private void initFXPanel() {
-    try {
-        fxPanel = new JFXPanel();
-        javaFXPanel.setLayout(new BorderLayout());
-        javaFXPanel.add(fxPanel, BorderLayout.CENTER);
-        getContentPane().setBackground(new java.awt.Color(168,209,165)); // SkyBlue
-        Platform.runLater(() -> {
-            RooMakingJFX3D rooMakingJFX = new RooMakingJFX3D();
-            rooMakingJFX.start(new Stage()); // Inicializa RoomDesigner3D
-            Scene scene = rooMakingJFX.getSubScene().getRoot().getScene(); // Obtiene la escena de RoomDesigner3D
-            fxPanel.setScene(scene);
-        });
-    } catch (Exception e) {
-        e.printStackTrace();
-        // Maneja la excepción apropiadamente, por ejemplo, mostrando un mensaje de error al usuario
-    }
-}    
+    private void initFXPanel() {
+        try {
+            fxPanel = new JFXPanel();
+            javaFXPanel.setLayout(new BorderLayout());
+            javaFXPanel.add(fxPanel, BorderLayout.CENTER);
+            getContentPane().setBackground(new java.awt.Color(168,209,165)); // SkyBlue
+            Platform.runLater(() -> {
+                RooMakingJFX3D rooMakingJFX = new RooMakingJFX3D();
+                rooMakingJFX.start(new Stage()); // Inicializa RoomDesigner3D
+                Scene scene = rooMakingJFX.getSubScene().getRoot().getScene(); // Obtiene la escena de RoomDesigner3D
+                fxPanel.setScene(scene);
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Maneja la excepción apropiadamente, por ejemplo, mostrando un mensaje de error al usuario
+        }
+    }    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -52,6 +48,8 @@ private void initFXPanel() {
         javaFXPanel = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setPreferredSize(new java.awt.Dimension(900, 600));
+        setResizable(false);
 
         botonVolver.setText("Volver");
         botonVolver.addActionListener(new java.awt.event.ActionListener() {
@@ -85,7 +83,7 @@ private void initFXPanel() {
                     .addGroup(layout.createSequentialGroup()
                         .addGap(19, 19, 19)
                         .addComponent(javaFXPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(514, Short.MAX_VALUE))
+                .addContainerGap(566, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -94,7 +92,7 @@ private void initFXPanel() {
                 .addComponent(javaFXPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(botonVolver)
-                .addContainerGap(260, Short.MAX_VALUE))
+                .addContainerGap(306, Short.MAX_VALUE))
         );
 
         pack();

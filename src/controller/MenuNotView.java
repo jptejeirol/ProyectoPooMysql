@@ -112,7 +112,7 @@ public class MenuNotView {
                             System.out.println("Digite la profundidad de su cuarto en metros: ");
                             double profundidad= lector.nextDouble();
                             Room diseño = new Room("Nombre del objeto", base, altura, profundidad);
-                            servRoom.guardar_diseño(username, diseño);
+                            servRoom.guardar_room(username, diseño);
                             
                             break;
                         case 3: System.out.println("Digite la base de su objeto en metros: ");

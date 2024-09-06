@@ -9,11 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.scene.PerspectiveCamera;
-import javafx.scene.Scene;
 import javafx.scene.SubScene;
+import static javafx.scene.input.KeyCode.A;
+import static javafx.scene.input.KeyCode.D;
+import static javafx.scene.input.KeyCode.S;
+import static javafx.scene.input.KeyCode.W;
 import javafx.scene.transform.Rotate;
 import model.Mysql_BD;
-import view.RooMakingJFX3D;
 import static view.RooMakingJFX3D.roomSeleccionada;
 
 public class ServicesRoomJFX {
@@ -32,7 +34,7 @@ public class ServicesRoomJFX {
     // Eliminar la conexión persistente
     // Connection con = bd.conectar();
 
-    public void guardar_Room(String username, RoomJFX room) {
+    public void guardar_diseño(String username, RoomJFX room) {
         try (Connection con = bd.conectar(); // Crear la conexión aquí
              PreparedStatement consulta = con.prepareStatement("INSERT INTO " + this.tabla_Diseño + "(usuario, nombre, hash) VALUES(?, ?, ?)")) {
              
@@ -47,6 +49,30 @@ public class ServicesRoomJFX {
             System.out.println("Se guardaron los datos correctamente.");
         } catch (SQLException ex) {
             System.out.println("Hubo un error al momento de guardar los datos. " + ex.getMessage());
+        }
+    }
+    
+    public void eliminar_diseño(String username, RoomJFX room) {
+        try (Connection con = bd.conectar(); // Crear la conexión aquí
+             PreparedStatement consulta = con.prepareStatement("DELETE FROM " + this.tabla_Diseño + " WHERE usuario = ? AND nombre = ?")) {
+
+            String nombreObjeto = room.getNombre();
+
+            // Asignar los valores a la consulta
+            consulta.setString(1, username);
+            consulta.setString(2, nombreObjeto);
+
+            int filasAfectadas = consulta.executeUpdate();
+
+            // Verificar si se eliminó algún registro
+            if (filasAfectadas > 0) {
+                System.out.println("El Room fue eliminado correctamente.");
+            } else {
+                System.out.println("No se encontró ningún Room para eliminar con esos parámetros.");
+            }
+
+        } catch (SQLException ex) {
+            System.out.println("Hubo un error al eliminar el Room. " + ex.getMessage());
         }
     }
 
@@ -141,5 +167,5 @@ public class ServicesRoomJFX {
         if (camera.getTranslateZ() < minZ) camera.setTranslateZ(minZ);
         if (camera.getTranslateZ() > maxZ) camera.setTranslateZ(maxZ);
     }
-}
 
+}

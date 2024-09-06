@@ -1,6 +1,5 @@
 package controller.services;
 
-import controller.implement.Item;
 import controller.implement.Room;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,7 +26,7 @@ public class ServicesRoom{
     
     Connection con = bd.conectar();
     
-    public void guardar_diseño(String username, Room room){
+    public void guardar_room(String username, Room room){
         try{
             PreparedStatement consulta;
             double Base = room.getBase(), Altura = room.getAltura(), Profundidad = room.getProfundidad();
@@ -48,9 +47,34 @@ public class ServicesRoom{
         }
     }
     
+    public void eliminar_room(String username, Room room) {
+        try (Connection con = bd.conectar(); // Crear la conexión aquí
+             PreparedStatement consulta = con.prepareStatement("DELETE FROM " + this.tabla_Diseño + " WHERE usuario = ? AND nombre = ?")) {
+
+            String nombreObjeto = room.getNombreObjeto();
+
+            // Asignar los valores a la consulta
+            consulta.setString(1, username);
+            consulta.setString(2, nombreObjeto);
+
+            int filasAfectadas = consulta.executeUpdate();
+
+            // Verificar si se eliminó algún registro
+            if (filasAfectadas > 0) {
+                System.out.println("El Room fue eliminado correctamente.");
+            } else {
+                System.out.println("No se encontró ningún Room para eliminar con esos parámetros.");
+            }
+
+        } catch (SQLException ex) {
+            System.out.println("Hubo un error al eliminar el Room. " + ex.getMessage());
+        }
+    }
+
+    
     public List<Room> getRoomsByUsuario(String usuario) {
         List<Room> roomsDb = new ArrayList<>();
-        String query = "SELECT * FROM room WHERE usuario = ?";
+        String query = "SELECT nombre, base, altura, profundidad FROM room WHERE usuario = ?";
 
         try (Connection conn = con;
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -73,5 +97,6 @@ public class ServicesRoom{
 
         return roomsDb;
     }
-    
+
+
 }

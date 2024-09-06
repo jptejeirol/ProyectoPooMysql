@@ -1,19 +1,28 @@
 package view;
 
 import controller.implement.Item;
+import controller.implement.RooMades;
 import controller.implement.Room;
+import controller.implement.RoomJFX;
 import controller.services.ServicesItem;
 import controller.services.ServicesRoom;
+import controller.services.ServicesRoomJFX;
 import controller.services.ServicesUsuario;
+import java.util.List;
+
 import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author julia
- */
+
 public class MisDiseños extends javax.swing.JFrame {
     ServicesItem servItem= new ServicesItem();
     ServicesRoom servRoom= new ServicesRoom();
+    ServicesRoomJFX servRoomJFX = servRoomJFX = new ServicesRoomJFX();;
+    List<RoomJFX> rooms = servRoomJFX.getRoomsJFXByUsuario(ServicesUsuario.getUsuario());
+    List<Item> items = servItem.getItemsByUsuario(ServicesUsuario.getUsuario());
+    List<Room> roomss = servRoom.getRoomsByUsuario(ServicesUsuario.getUsuario());
+    Item item = null;
+    Room room = null;
+    RoomJFX roomJfX = null;
 
     public MisDiseños() {
         initComponents();
@@ -36,6 +45,7 @@ public class MisDiseños extends javax.swing.JFrame {
         scrollTabla = new javax.swing.JScrollPane();
         tablaMostrar = new javax.swing.JTable();
         botonVolver = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -110,6 +120,14 @@ public class MisDiseños extends javax.swing.JFrame {
         });
         mainPanel.add(botonVolver, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 460, -1, -1));
 
+        jButton1.setText("Eliminar");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                EliminarButtomActionPerformed(evt);
+            }
+        });
+        mainPanel.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(700, 460, -1, -1));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -157,16 +175,24 @@ public class MisDiseños extends javax.swing.JFrame {
                 }
                 break;
             case 2:
-                /*for (Room room : ServicesRoom.getRooms()) {
+                // Obtener la lista de RoomJFX del usuario
+                // Crear la instancia de RooMades con la lista completa
+                RooMades roomMades = new RooMades(rooms);
+                
+
+                // Recorrer los datos de cada RoomJFX y agregar una fila por cada uno
+                for (int i = 0; i < rooms.size(); i++) {
+                    // Agregar una fila por cada RoomJFX
                     tabla.addRow(new Object[]{
-                        ServicesUsuario.getUsuario(),
-                        room.getNombreObjeto(),
-                        room.getBase(),
-                        room.getAltura(),
-                        room.getProfundidad()
+                        ServicesUsuario.getUsuario(),               // Usuario
+                        roomMades.getNombres().get(i),              // Nombre del cuarto
+                        roomMades.getBases().get(i),                // Base del cuarto
+                        roomMades.getAlturas().get(i),              // Altura del cuarto
+                        roomMades.getProfundidades().get(i),        // Profundidad del cuarto
+                        roomMades.getNumerosDeObjetos().get(i)      // Número de objetos en el cuarto
                     });
-                }   */
-                   break;       
+                }
+                break;       
             default:
                 break;
         }
@@ -179,8 +205,50 @@ public class MisDiseños extends javax.swing.JFrame {
         this.dispose();
     }//GEN-LAST:event_botonVolverActionPerformed
 
+    private void EliminarButtomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EliminarButtomActionPerformed
+        DefaultTableModel model = (DefaultTableModel) tablaMostrar.getModel();
+        int[] selectedRows = tablaMostrar.getSelectedRows(); // Obtener filas seleccionadas
+
+        if (selectedRows.length > 0) {
+            int indiceLista = listaOpciones.getSelectedIndex();
+            String usuario = ServicesUsuario.getUsuario();
+
+            for (int i = selectedRows.length - 1; i >= 0; i--) {
+                int selectedRow = selectedRows[i];
+
+                // Dependiendo de la opción seleccionada, crear el objeto y eliminarlo
+                switch (indiceLista) {
+                    case 0: // Eliminar un Item
+                        // Crear un objeto Item con los datos de la fila seleccionada
+                        item = new Item(items.get(selectedRow).getNombreObjeto(), items.get(selectedRow).getBase(), items.get(selectedRow).getAltura(), items.get(selectedRow).getProfundidad());
+                        servItem.eliminar_item(usuario, item);
+                        break;
+
+                    case 1: // Eliminar un Room
+                        room = new Room(roomss.get(selectedRow).getNombreObjeto(), roomss.get(selectedRow).getBase(), roomss.get(selectedRow).getAltura(), roomss.get(selectedRow).getProfundidad());
+
+                        servRoom.eliminar_room(usuario, room);
+                        break;
+
+                    case 2: // Eliminar un RoomJFX
+                        roomJfX = new RoomJFX(rooms.get(selectedRow).getNombre(), rooms.get(selectedRow).getHash());
+                        servRoomJFX.eliminar_diseño(usuario, roomJfX );
+                        break;
+                }
+
+                // Eliminar la fila de la tabla después de eliminar de la base de datos
+                model.removeRow(selectedRow);
+            }
+
+            System.out.println("Se eliminaron los elementos seleccionados.");
+        } else {
+            System.out.println("No se seleccionó ningún elemento.");
+        }
+    }//GEN-LAST:event_EliminarButtomActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton botonVolver;
+    private javax.swing.JButton jButton1;
     private javax.swing.JList<String> listaOpciones;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JPanel panelDiseños;

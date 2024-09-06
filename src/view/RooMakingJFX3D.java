@@ -50,6 +50,7 @@ import javafx.scene.transform.Transform;
 
 import controller.implement.RoomJFX;
 import controller.services.ServicesRoom;
+import controller.services.ServicesItem;
 import controller.services.ServicesRoomJFX;
 import controller.services.ServicesUsuario;
 import java.util.Optional;
@@ -62,6 +63,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.paint.Material;
 import javafx.stage.Modality;
 
 public class RooMakingJFX3D extends Application {
@@ -88,16 +90,23 @@ public class RooMakingJFX3D extends Application {
     private Box floor;
     private Box wallBack;
     private Box wallLeft;
+    private Movible newObjectItem;
     
     private CrearItem crearItem;
     
     public static Room roomSeleccionada;
+    public static Item itemSeleccionado;
     private List<Item> ItemSeleccionados= new ArrayList<>();
 
     public void setRoomSeleccionada(Room roomSeleccionada) {
         this.roomSeleccionada = roomSeleccionada;
     }
- 
+    
+    public void setItemSeleccionado(Item itemSeleccionada) {
+        this.itemSeleccionado = itemSeleccionada;
+    }
+    
+    
     private ObjectMapper objectMapper = new ObjectMapper();
             // Crear panel de control
     VBox controlPanel= createControlPanel(subScene, cameraInterna, cameraExterna);
@@ -148,6 +157,8 @@ public class RooMakingJFX3D extends Application {
         HBox mainLayout = new HBox(10);
         mainLayout.setPadding(new Insets(10));
         mainLayout.getChildren().addAll(subScene, controlPanel);
+        mainLayout.setPrefHeight(600);
+        mainLayout.setPrefWidth(400);
         
         mainLayout.setStyle(
             "-fx-background-color: linear-gradient(to bottom right, rgb(245,245,220), rgb(162,217,206)); " +  // Fondo degradado de beige a verde claro
@@ -159,8 +170,8 @@ public class RooMakingJFX3D extends Application {
         );        
 
         // Crear la escena principal
-        Scene mainScene = new Scene(mainLayout);
-        
+        Scene mainScene = new Scene(mainLayout, 800, 500);
+       
         //metodo camara:
         servRoomJFX.MoverCamara(subScene, cameraInterna);
 
@@ -184,7 +195,6 @@ public class RooMakingJFX3D extends Application {
         });
 
     }
-
 
     private VBox createControlPanel(SubScene scene, PerspectiveCamera cameraInternal, PerspectiveCamera cameraExternal) {
         VBox controlPanel = new VBox(10);       
@@ -227,17 +237,28 @@ public class RooMakingJFX3D extends Application {
         );        
         roomButton.setOnAction(e -> showRoomDialog()) ; 
         
-        Label titleLabel = new Label("Crear Item:");
+        Button itemButton = new Button("Crear Item");
+        itemButton.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(126,188,137), rgb(162,217,206));" + // Degradado de verde
+            "-fx-text-fill: white;" +  // Texto en blanco
+            "-fx-font-weight: bold;" +  // Texto en negrita
+            "-fx-border-color: rgb(126,188,137);" +  // Borde del botón
+            "-fx-border-radius: 5;" +  // Bordes redondeados
+            "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
+        );
+        itemButton.setOnAction(e -> showItemDialog() );
+        
+        /*Label titleLabel = new Label("Crear Item:");
         titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: rgb(210,180,140);"); // Color tierra        
         ComboBox<String> objectSelector = new ComboBox<>();
-        objectSelector.getItems().addAll("Prisma", "Esfera", "Cilindro");
+        objectSelector.getItems().addAll("Cubo", "Esfera", "Cilindro");
         objectSelector.setStyle(
             "-fx-background-color: linear-gradient(to bottom, rgb(245,245,220), rgb(162,217,206));" +  // Degradado de beige claro a verde claro
             "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
             "-fx-border-radius: 5;"  // Bordes redondeados
         );        
-        objectSelector.setOnAction(e -> showDimensionDialog(objectSelector.getValue()));
-
+        objectSelector.setOnAction(e -> showDimensionDialog(objectSelector.getValue())); 
+        */
         Button itemsButton = new Button("Modelado Items");
         itemsButton.setStyle(
             "-fx-background-color: linear-gradient(to bottom, rgb(126,188,137), rgb(162,217,206));" + // Degradado de verde
@@ -298,7 +319,7 @@ public class RooMakingJFX3D extends Application {
                 RoomJFX roomData = new RoomJFX(roomName, encodedJson);
 
                 // Aquí puedes guardar roomData en una lista, base de datos, etc.
-                servRoomJFX.guardar_Room(ServicesUsuario.getUsuario(), roomData);
+                servRoomJFX.guardar_diseño(ServicesUsuario.getUsuario(), roomData);
                 ServicesRoomJFX.setRooms(roomData);           
             });
         });       
@@ -393,7 +414,7 @@ public class RooMakingJFX3D extends Application {
             
             });
         controlPanel.setAlignment(Pos.CENTER);            
-        controlPanel.getChildren().addAll(roomButton, titleLabel, objectSelector,itemsButton, fijarobjetos, groupLabel, groupSelector, saveButton, loadButton, agregarobjetos, switchCameraButton);
+        controlPanel.getChildren().addAll(roomButton, itemButton, itemsButton, fijarobjetos, groupLabel, groupSelector, saveButton, loadButton, agregarobjetos, switchCameraButton, iluminacionButton);
         controlPanel.setStyle(
             "-fx-background-color: rgb(245,245,220);" +  // Fondo beige claro
             "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
@@ -437,6 +458,7 @@ private void OrdenarObjetos() {
                 } else {
                     nuevaZ = (random.nextBoolean()) ? rangoMinZ + objDepth / 3.1 : rangoMaxZ - objDepth / 3.1;
                     nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
+                    rotateObjectY((Group)node);
                 }
 
                 // Ajustar nuevaX y nuevaZ para acercar los objetos a los límites sin salirse
@@ -522,6 +544,7 @@ private void OrdenarObjetos() {
         }
     }
 }
+    
         public abstract class Movible extends Group {
         private boolean fijo = false;
 
@@ -544,14 +567,14 @@ private void OrdenarObjetos() {
             this.getChildren().add(sphere);
         }
             @Override
-    public boolean isFijo() {
-        return fijo;
-    }
+        public boolean isFijo() {
+            return fijo;
+        }
 
-    @Override
-    public void setFijo(boolean fijo) {
-        this.fijo = fijo;
-    }
+        @Override
+        public void setFijo(boolean fijo) {
+            this.fijo = fijo;
+        }
     }
 
     // Cylinder implementation
@@ -618,10 +641,41 @@ private void OrdenarObjetos() {
         this.fijo = fijo;
     }
     }
+    
+    class ItemNuevo extends Movible{
+        private boolean fijo;
+    
+        public ItemNuevo(double width, double height, double depth){
+            this.fijo = true;
+            Box item = new Box(width, height, depth);
+            item.setMaterial(new PhongMaterial(Color.WHITE));
+            this.setTranslateX(0);
+            this.setTranslateY(0);
+            this.setTranslateZ(0);
+            this.getChildren().addAll(item);
+            
+            
+            
+            
+        }
+        
+        private ItemNuevo crearItemNuevo(double width, double height, double depth){
+            return new ItemNuevo( width,  height,  depth);
+        }
+        
+        @Override
+        public boolean isFijo() {
+            return fijo;
+        }
 
+        @Override
+        public void setFijo(boolean fijo) {
+            this.fijo = fijo;
+        }
+    }
     
     class CamaDoble extends Movible{
-                private boolean fijo;
+        private boolean fijo;
 
         public CamaDoble(){
                         this.fijo = true;
@@ -1043,11 +1097,14 @@ private void OrdenarObjetos() {
         if (objectType.equals("Cilindro")) {
             depthLabel.setDisable(true);
             depthField.setDisable(true);
+            
         } else if(objectType.equals("Esfera")) {
             depthLabel.setDisable(true);
             depthField.setDisable(true);
             heightLabel.setDisable(true);
             heightField.setDisable(true);
+        } else if(objectType.equals("Cubo")){
+            
         }
         
         Button createButton = new Button("Crear");
@@ -1147,7 +1204,7 @@ private void OrdenarObjetos() {
                 wallBack = createWallBack(width, height, depth);
                 wallLeft = createWallLeft(width, height, depth);
 
-                root3D.getChildren().addAll(floor, wallBack, wallLeft);                
+                root3D.getChildren().addAll(floor, wallBack, wallLeft);
 
 
                     dialog.close();
@@ -1166,6 +1223,85 @@ private void OrdenarObjetos() {
             dialog.show();
             
         }
+        
+    private void showItemDialog() {
+        Stage dialog = new Stage();
+        dialog.setTitle("Item's Creados");
+
+        // Crear una tabla con el tipo Item
+        TableView<Item> tableView = new TableView<>();
+
+        // Crear las columnas y configurar cómo se llenan
+        TableColumn<Item, String> column1 = new TableColumn<>("Item");
+        column1.setCellValueFactory(new PropertyValueFactory<>("nombreObjeto"));
+
+        TableColumn<Item, Double> column2 = new TableColumn<>("Base");
+        column2.setCellValueFactory(new PropertyValueFactory<>("base"));
+
+        TableColumn<Item, Double> column3 = new TableColumn<>("Altura");
+        column3.setCellValueFactory(new PropertyValueFactory<>("altura"));
+
+        TableColumn<Item, Double> column4 = new TableColumn<>("Profundidad");
+        column4.setCellValueFactory(new PropertyValueFactory<>("profundidad"));
+
+        tableView.getColumns().addAll(column1, column2, column3, column4);
+
+        // Configurar un tamaño mínimo para la tabla si es necesario
+        tableView.setPrefHeight(200);
+        tableView.setPrefWidth(500);
+
+        // Añadir los items a la tabla
+        for (Item item : ServicesItem.getItems()) {
+            tableView.getItems().add(item);
+        }
+
+        // Añadir un listener para detectar la selección de la fila
+        tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                setItemSeleccionado(newSelection);
+            }
+        });
+
+        Button createButton = new Button("Crear");
+        createButton.setOnAction(e -> {
+            try {
+                double width = itemSeleccionado.getBase();
+                double height = itemSeleccionado.getAltura();
+                double depth = itemSeleccionado.getProfundidad();
+
+                // Verificar si ya existen los objetos y eliminarlos si es necesario
+                if (newObjectItem != null) {
+                    root3D.getChildren().remove(newObjectItem);
+                }
+
+                // Crear el nuevo objeto
+                newObjectItem = new ItemNuevo(width, height, depth);
+                
+                root3D.getChildren().add(newObjectItem);
+
+                // Configurar la posición y eventos del objeto
+                newObjectItem.setTranslateX(0);
+                newObjectItem.setTranslateY(-500);
+                newObjectItem.setTranslateZ(0);
+                newObjectItem.setOnMousePressed(this::handleGroupPressed);
+                newObjectItem.setOnMouseDragged(this::handleGroupDragged);
+                setupContextMenu(newObjectItem); // Configurar menú contextual
+
+                dialog.close();
+            } catch (NumberFormatException ex) {
+                Alert alert = new Alert(AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("Dimensiones inválidas");
+                alert.setContentText("Por favor ingrese dimensiones válidas.");
+                alert.showAndWait();
+            }
+        });
+
+        VBox vbox = new VBox(tableView, createButton);
+        Scene dialogScene = new Scene(vbox, 300, 250);
+        dialog.setScene(dialogScene);
+        dialog.show();
+    }
 
     private Box createFloor(double width, double height, double depth) {
         Box floor = new Box(width, 10, depth);
@@ -1187,7 +1323,12 @@ private void OrdenarObjetos() {
         wallLeft.setTranslateX(-width/2);
         return wallLeft;
     }        
-
+    private ItemNuevo createItemNuevo(double width, double height, double depth){
+        ItemNuevo itemNuevo = new ItemNuevo(width, height, depth);
+        return itemNuevo;
+    }
+    
+    
     private void addObject(String objectType, double width, double height, double depth) {
         Movible newObject = null;
         switch (objectType) {
@@ -1341,16 +1482,6 @@ private void OrdenarObjetos() {
         event.consume();
     }
     
-    /*private void handleGroupPressed(MouseEvent event) {
-        if (event.getButton() == MouseButton.PRIMARY && event.getSource() instanceof Group) {
-            //selectedObject = null; // No seleccionar un objeto individual
-            selectedGroup = (Group) event.getSource();
-            objectMouseOffsetX = selectedGroup.getTranslateX() - event.getSceneX();
-            objectMouseOffsetY = selectedGroup.getTranslateY() - event.getSceneY();
-        }
-        event.consume();
-    }*/
-    
     private void handleGroupPressed(MouseEvent event) {
         if (event.getButton() == MouseButton.PRIMARY && event.getSource() instanceof Movible) {
             selectedShape = (Movible) event.getSource();
@@ -1364,15 +1495,6 @@ private void OrdenarObjetos() {
         }
         event.consume();
     }
-
-    /*private void handleGroupDragged(MouseEvent event) {
-        if (selectedGroup != null) {
-            Point3D newPosition = unproject(event.getSceneX(), event.getSceneY(), selectedGroup.getTranslateZ());
-            selectedGroup.setTranslateX(newPosition.getX());
-            selectedGroup.setTranslateY(newPosition.getY());
-        }
-        event.consume();
-    }*/
     
     private void handleGroupDragged(MouseEvent event) {
         if (selectedShape != null && !positionsLocked && selectedShape.isFijo()==true) {
@@ -1388,7 +1510,7 @@ private void OrdenarObjetos() {
             }
         }
         event.consume();
-    }
+    }        
 
     private void togglePositionsLock() {
         for (javafx.scene.Node node : root3D.getChildren()) {
@@ -1460,8 +1582,12 @@ private void startPhysics() {
     Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), e -> {
         for (javafx.scene.Node node : root3D.getChildren()) {
             if ((node instanceof Shape3D || node instanceof Group) && node != selectedObject) {
-                applyGravity(node);
-                detectCollisions(node);
+                if (node instanceof Ventana){
+                    detectCollisions(node);                    
+                } else {
+                    applyGravity(node);
+                    detectCollisions(node);                    
+                }
             }
         }
     }));
@@ -1537,59 +1663,59 @@ private boolean isColliding(javafx.scene.Node node1, javafx.scene.Node node2) {
 }
 
 
-private void resolveCollision(javafx.scene.Node node1, javafx.scene.Node node2) {
-    Bounds bounds1 = node1.getBoundsInParent();
-    Bounds bounds2 = node2.getBoundsInParent();
+    private void resolveCollision(javafx.scene.Node node1, javafx.scene.Node node2) {
+        Bounds bounds1 = node1.getBoundsInParent();
+        Bounds bounds2 = node2.getBoundsInParent();
 
-    // Calcular las diferencias en las posiciones de los nodos
-    double diffX = bounds1.getCenterX() - bounds2.getCenterX();
-    double diffY = bounds1.getCenterY() - bounds2.getCenterY();
-    double diffZ = bounds1.getCenterZ() - bounds2.getCenterZ();
+        // Calcular las diferencias en las posiciones de los nodos
+        double diffX = bounds1.getCenterX() - bounds2.getCenterX();
+        double diffY = bounds1.getCenterY() - bounds2.getCenterY();
+        double diffZ = bounds1.getCenterZ() - bounds2.getCenterZ();
 
-    // Calcular la superposición en cada eje
-    double overlapX = (bounds1.getWidth() + bounds2.getWidth()) / 2 - Math.abs(diffX);
-    double overlapY = (bounds1.getHeight() + bounds2.getHeight()) / 2 - Math.abs(diffY);
-    double overlapZ = (bounds1.getDepth() + bounds2.getDepth()) / 2 - Math.abs(diffZ);
+        // Calcular la superposición en cada eje
+        double overlapX = (bounds1.getWidth() + bounds2.getWidth()) / 2 - Math.abs(diffX);
+        double overlapY = (bounds1.getHeight() + bounds2.getHeight()) / 2 - Math.abs(diffY);
+        double overlapZ = (bounds1.getDepth() + bounds2.getDepth()) / 2 - Math.abs(diffZ);
 
-    if (((node1 == floor || node2 == floor) || (node1 == wallBack || node2 == wallBack) || (node1 == wallLeft || node2 == wallLeft)) 
-            && ((floor != null) && (wallBack != null) && (wallLeft != null))) {
-        node1.setTranslateY(node1.getTranslateY() - 1);
-        node2.setTranslateY(node2.getTranslateY() + 1);
-    } else {    
-        // Asegurarse de que hay una colisión en algún eje
-        if (overlapX > 0 && overlapY > 0 && overlapZ > 0) {
-            // Encuentra el eje con la menor superposición para mover el nodo en esa dirección
-            if (overlapX < overlapY && overlapX < overlapZ) {
-                double adjustment = overlapX / 2;
-                if (diffX > 0) {
-                    node1.setTranslateX(node1.getTranslateX() + adjustment);
-                    node2.setTranslateX(node2.getTranslateX() - adjustment);
+        if (((node1 == floor || node2 == floor) || (node1 == wallBack || node2 == wallBack) || (node1 == wallLeft || node2 == wallLeft)) 
+                && ((floor != null) && (wallBack != null) && (wallLeft != null))) {
+            node1.setTranslateY(node1.getTranslateY() - 1);
+            node2.setTranslateY(node2.getTranslateY() + 1);
+        } else {    
+            // Asegurarse de que hay una colisión en algún eje
+            if (overlapX > 0 && overlapY > 0 && overlapZ > 0) {
+                // Encuentra el eje con la menor superposición para mover el nodo en esa dirección
+                if (overlapX < overlapY && overlapX < overlapZ) {
+                    double adjustment = overlapX / 2;
+                    if (diffX > 0) {
+                        node1.setTranslateX(node1.getTranslateX() + adjustment);
+                        node2.setTranslateX(node2.getTranslateX() - adjustment);
+                    } else {
+                        node1.setTranslateX(node1.getTranslateX() - adjustment);
+                        node2.setTranslateX(node2.getTranslateX() + adjustment);
+                    }
+                } else if (overlapY < overlapX && overlapY < overlapZ) {
+                    double adjustment = overlapY / 2;
+                    if (diffY > 0) {
+                        node1.setTranslateY(node1.getTranslateY() + adjustment);
+                        node2.setTranslateY(node2.getTranslateY() - adjustment);
+                    } else {
+                        node1.setTranslateY(node1.getTranslateY() - adjustment);
+                        node2.setTranslateY(node2.getTranslateY() + adjustment);
+                    }
                 } else {
-                    node1.setTranslateX(node1.getTranslateX() - adjustment);
-                    node2.setTranslateX(node2.getTranslateX() + adjustment);
-                }
-            } else if (overlapY < overlapX && overlapY < overlapZ) {
-                double adjustment = overlapY / 2;
-                if (diffY > 0) {
-                    node1.setTranslateY(node1.getTranslateY() + adjustment);
-                    node2.setTranslateY(node2.getTranslateY() - adjustment);
-                } else {
-                    node1.setTranslateY(node1.getTranslateY() - adjustment);
-                    node2.setTranslateY(node2.getTranslateY() + adjustment);
-                }
-            } else {
-                double adjustment = overlapZ / 2;
-                if (diffZ > 0) {
-                    node1.setTranslateZ(node1.getTranslateZ() + adjustment);
-                    node2.setTranslateZ(node2.getTranslateZ() - adjustment);
-                } else {
-                    node1.setTranslateZ(node1.getTranslateZ() - adjustment);
-                    node2.setTranslateZ(node2.getTranslateZ() + adjustment);
+                    double adjustment = overlapZ / 2;
+                    if (diffZ > 0) {
+                        node1.setTranslateZ(node1.getTranslateZ() + adjustment);
+                        node2.setTranslateZ(node2.getTranslateZ() - adjustment);
+                    } else {
+                        node1.setTranslateZ(node1.getTranslateZ() - adjustment);
+                        node2.setTranslateZ(node2.getTranslateZ() + adjustment);
+                    }
                 }
             }
         }
-    }
-}    
+    }    
 
     private String saveScene() {
         Map<String, Object> sceneData = new HashMap<>();
@@ -1632,6 +1758,7 @@ private void resolveCollision(javafx.scene.Node node1, javafx.scene.Node node2) 
                 }
             }
         } catch (JsonProcessingException e) {
+            System.out.println(e);
         }
     }
 
@@ -1662,6 +1789,7 @@ private void resolveCollision(javafx.scene.Node node1, javafx.scene.Node node2) 
                         objectData.put("radius", cylinder.getRadius());
                         objectData.put("height", cylinder.getHeight());
                     }
+                    
                     default -> {
                     }
                 }
@@ -1673,6 +1801,7 @@ private void resolveCollision(javafx.scene.Node node1, javafx.scene.Node node2) 
                 }
                 objectData.put("children", childrenData);
             }
+            
             default -> {
             }
         }
@@ -1699,6 +1828,7 @@ private void resolveCollision(javafx.scene.Node node1, javafx.scene.Node node2) 
     }
 
 
+
     private javafx.scene.Node decodeObject(Map<String, Object> objectData) {
         String type = (String) objectData.get("type");
         javafx.scene.Node node = null;
@@ -1709,6 +1839,42 @@ private void resolveCollision(javafx.scene.Node node1, javafx.scene.Node node2) 
                     (double) objectData.get("height"),
                     (double) objectData.get("depth")
                 );
+            case "ItemNuevo" -> {
+                // Obtener las dimensiones con verificación de nulidad y casting adecuado
+                Double width = objectData.get("width") instanceof Number ? ((Number) objectData.get("width")).doubleValue() : 100.0;
+                Double height = objectData.get("height") instanceof Number ? ((Number) objectData.get("height")).doubleValue() : 100.0;
+                Double depth = objectData.get("depth") instanceof Number ? ((Number) objectData.get("depth")).doubleValue() : 100.0;
+
+                // Imprimir las dimensiones para depuración
+                System.out.println("Dimensiones para ItemNuevo: width=" + width + ", height=" + height + ", depth=" + depth);
+
+                // Crear el objeto ItemNuevo con dimensiones válidas
+                ItemNuevo itemNuevo = new ItemNuevo(width, height, depth);
+
+                // Procesar los hijos
+                List<Map<String, Object>> childrenData = (List<Map<String, Object>>) objectData.get("children");
+                if (childrenData != null) {
+                    for (Map<String, Object> childData : childrenData) {
+                        javafx.scene.Node child = decodeObject(childData);
+                        if (child != null) {
+                            itemNuevo.setTranslateX(0);
+                            itemNuevo.setTranslateY(-500);
+                            itemNuevo.setTranslateZ(0);
+                            itemNuevo.setOnMousePressed(this::handleGroupPressed);
+                            itemNuevo.setOnMouseDragged(this::handleGroupDragged);
+                            setupContextMenu(itemNuevo);
+                            itemNuevo.getChildren().add(child);
+                        } else {
+                            System.err.println("Child node could not be decoded: " + childData);
+                        }
+                    }
+                } else {
+                    System.out.println("No children data for ItemNuevo");
+                }
+
+                node = itemNuevo;
+            }
+
             case "Sphere" -> node = new Sphere((double) objectData.get("radius"));
             case "Cylinder" -> node = new Cylinder(
                     (double) objectData.get("radius"),
@@ -1865,119 +2031,153 @@ private void resolveCollision(javafx.scene.Node node1, javafx.scene.Node node2) 
         return node;
     }
     
+    
+    
     private void showCargarDialog() {
-    Stage secondaryStage = new Stage();
-    
-    Map<String, List<String>> resultado = cargarOpcionesDesdeBD(); // Método ficticio para cargar desde la BD
-    List<String> opciones = resultado.get("opciones");
-    List<String> hashes = resultado.get("hashes");
-    
-    ComboBox<String> roomComboBox = new ComboBox<>();
-    roomComboBox.getItems().addAll(opciones);
-    roomComboBox.setStyle(
-        "-fx-background-color: linear-gradient(to bottom, rgb(245,245,245), rgb(210,210,210));" + // Degradado de gris claro
-        "-fx-border-color: rgb(200,200,200);" +  // Borde gris claro
-        "-fx-border-radius: 5;" +  // Bordes redondeados
-        "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
-    );
-    roomComboBox.setPromptText("Selecciona una opción");
+        Stage secondaryStage = new Stage();
 
-    Button cargarRoomButton = new Button("Cargar Room");
-    cargarRoomButton.setStyle(
-        "-fx-background-color: linear-gradient(to bottom, rgb(126,188,137), rgb(162,217,206));" + // Degradado verde
-        "-fx-text-fill: white;" +  // Texto blanco
-        "-fx-font-weight: bold;" +  // Texto en negrita
-        "-fx-border-color: rgb(126,188,137);" +  // Borde verde
-        "-fx-border-radius: 5;" +  // Bordes redondeados
-        "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
-    );
-    cargarRoomButton.setVisible(false); // Inicialmente oculto
+        Map<String, List<String>> resultado = cargarOpcionesDesdeBD(); // Método para cargar desde la BD
+        List<String> opciones = resultado.get("opciones");
+        List<String> hashes = resultado.get("hashes");
 
-    roomComboBox.setOnAction(e -> {
-        // Muestra el botón cuando se selecciona una opción
-        if (roomComboBox.getValue() != null) {
-            cargarRoomButton.setVisible(true);
-        }
-    });
-     
-    roomComboBox.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
-        // Verifica si el nuevo valor no es null y es válido
-        if (newValue.intValue() != -1) {
-            int indiceSeleccionado = newValue.intValue();
-            // Obtener el hash correspondiente al índice seleccionado
-            String elemento = hashes.get(indiceSeleccionado);
-            cargarRoomButton.setOnAction(e -> {
-                loadScene(elemento);
-                secondaryStage.close();        
-            });
-        }
-    });   
+        ComboBox<String> roomComboBox = new ComboBox<>();
+        roomComboBox.getItems().addAll(opciones);
+        roomComboBox.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(245,245,245), rgb(210,210,210));" + // Degradado de gris claro
+            "-fx-border-color: rgb(200,200,200);" +  // Borde gris claro
+            "-fx-border-radius: 5;" +  // Bordes redondeados
+            "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
+        );
+        roomComboBox.setPromptText("Selecciona una opción");
 
-    VBox secondaryLayout = new VBox(10);
-    secondaryLayout.setPadding(new Insets(15));
-    secondaryLayout.setStyle(
-        "-fx-background-color: rgb(245,245,220);" +  
-        "-fx-padding: 15;" +  // Espaciado interno
-        "-fx-border-color: rgb(200,200,200);" +  // Borde gris claro
-        "-fx-border-width: 2px;" +  // Grosor del borde
-        "-fx-border-radius: 10px;"  // Bordes redondeados
-    );
-    secondaryLayout.getChildren().addAll(
-        new Label("Rooms Guardadas:") {{
-            setStyle(
-                "-fx-font-size: 16px;" +  // Tamaño de fuente
-                "-fx-font-weight: bold;" +  // Negrita
-                "-fx-text-fill: rgb(0,0,0);"  // Color del texto
-            );
-        }},
-        roomComboBox,
-        cargarRoomButton
-    );
+        Button cargarRoomButton = new Button("Cargar Room");
+        cargarRoomButton.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(126,188,137), rgb(162,217,206));" + // Degradado verde
+            "-fx-text-fill: white;" +  // Texto blanco
+            "-fx-font-weight: bold;" +  // Texto en negrita
+            "-fx-border-color: rgb(126,188,137);" +  // Borde verde
+            "-fx-border-radius: 5;" +  // Bordes redondeados
+            "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
+        );
+        cargarRoomButton.setVisible(false); // Inicialmente oculto
 
-    Scene secondaryScene = new Scene(secondaryLayout, 300, 200);
-    secondaryStage.setScene(secondaryScene);
-    secondaryStage.setTitle("Cargar Room");
-    secondaryStage.initModality(Modality.APPLICATION_MODAL); // Bloquea interacción con otras ventanas mientras está abierto
-    secondaryStage.show();
-}
+        roomComboBox.setOnAction(e -> {
+            // Muestra el botón cuando se selecciona una opción
+            if (roomComboBox.getValue() != null) {
+                cargarRoomButton.setVisible(true);
+            }
+        });
+
+        roomComboBox.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
+            // Verifica si el nuevo valor no es null y es válido
+            if (newValue.intValue() != -1) {
+                int indiceSeleccionado = newValue.intValue();
+                // Obtener el hash correspondiente al índice seleccionado
+                String elemento = hashes.get(indiceSeleccionado);
+                cargarRoomButton.setOnAction(e -> {
+                    loadScene(elemento);
+                    secondaryStage.close();        
+                });
+            }
+        });   
+
+        VBox secondaryLayout = new VBox(10);
+        secondaryLayout.setPadding(new Insets(15));
+        secondaryLayout.setStyle(
+            "-fx-background-color: rgb(245,245,220);" +  
+            "-fx-padding: 15;" +  // Espaciado interno
+            "-fx-border-color: rgb(200,200,200);" +  // Borde gris claro
+            "-fx-border-width: 2px;" +  // Grosor del borde
+            "-fx-border-radius: 10px;"  // Bordes redondeados
+        );
+        secondaryLayout.getChildren().addAll(
+            new Label("Rooms Guardadas:") {{
+                setStyle(
+                    "-fx-font-size: 16px;" +  // Tamaño de fuente
+                    "-fx-font-weight: bold;" +  // Negrita
+                    "-fx-text-fill: rgb(0,0,0);"  // Color del texto
+                );
+            }},
+            roomComboBox,
+            cargarRoomButton
+        );
+
+        Scene secondaryScene = new Scene(secondaryLayout, 300, 200);
+        secondaryStage.setScene(secondaryScene);
+        secondaryStage.setTitle("Cargar Room");
+        secondaryStage.initModality(Modality.APPLICATION_MODAL); // Bloquea interacción con otras ventanas mientras está abierto
+        secondaryStage.show();
+    }
 
     // Método ficticio para cargar opciones desde la base de datos
-private Map<String, List<String>> cargarOpcionesDesdeBD() {
-    List<RoomJFX> rooms = servRoomJFX.getRoomsJFXByUsuario(ServicesUsuario.getUsuario());
-    
-    // Verifica si la lista de habitaciones está vacía
-    if (rooms.isEmpty()) {
-        System.out.println("No se encontraron habitaciones para el usuario.");
-    } else {
-        // Iterar sobre las habitaciones obtenidas
-        for (RoomJFX room : rooms) {
-            ServicesRoomJFX.setRooms(room);
-            System.out.println("Habitación: " + room.getNombre());
+    private Map<String, List<String>> cargarOpcionesDesdeBD() {
+        List<RoomJFX> rooms = servRoomJFX.getRoomsJFXByUsuario(ServicesUsuario.getUsuario());
+
+        // Verifica si la lista de habitaciones está vacía
+        if (rooms.isEmpty()) {
+            System.out.println("No se encontraron habitaciones para el usuario.");
+        } else {
+            // Iterar sobre las habitaciones obtenidas
+            for (RoomJFX room : rooms) {
+                ServicesRoomJFX.setRooms(room);
+                System.out.println("Habitación: " + room.getNombre());
+            }
         }
+
+        List<String> opciones = new ArrayList<>();
+        List<String> hashes = new ArrayList<>();
+
+        // Verifica si la lista de habitaciones en ServicesRoomJFX está vacía
+        List<RoomJFX> savedRooms = ServicesRoomJFX.getRooms();
+        if (savedRooms.isEmpty()) {
+            System.out.println("No se encontraron habitaciones guardadas.");
+        } else {
+            // Iterar sobre las habitaciones guardadas
+            for (RoomJFX room : savedRooms) {
+                opciones.add(room.getNombre());
+                hashes.add(room.getHash());
+            }
+        }
+
+        // Crear el resultado y añadir las listas
+        Map<String, List<String>> resultado = new HashMap<>();
+        resultado.put("opciones", opciones);
+        resultado.put("hashes", hashes);
+
+        return resultado;
+    }
+    
+        class Ventana extends Movible {
+                private boolean fijo;
+
+        public Ventana(){
+                        this.fijo = true;
+
+        // Base
+        Box marco = new Box(5, 800, 1000);
+        marco.setMaterial(new PhongMaterial(Color.BLACK));
+
+        // Cajón1
+        Box ventana = new Box(5, 780, 980);
+        ventana.setMaterial(new PhongMaterial(Color.WHITE));
+        ventana.setTranslateX(5);  
+
+        // Grupo
+        this.getChildren().addAll(marco, ventana);
+    }
+        private Ventana createVentana(){
+            return new Ventana();
+        }
+                            @Override
+    public boolean isFijo() {
+        return fijo;
     }
 
-    List<String> opciones = new ArrayList<>();
-    List<String> hashes = new ArrayList<>();
-    
-    // Verifica si la lista de habitaciones en ServicesRoomJFX está vacía
-    List<RoomJFX> savedRooms = ServicesRoomJFX.getRooms();
-    if (savedRooms.isEmpty()) {
-        System.out.println("No se encontraron habitaciones guardadas.");
-    } else {
-        // Iterar sobre las habitaciones guardadas
-        for (RoomJFX room : savedRooms) {
-            opciones.add(room.getNombre());
-            hashes.add(room.getHash());
-        }
+    @Override
+    public void setFijo(boolean fijo) {
+        this.fijo = fijo;
     }
-
-    // Crear el resultado y añadir las listas
-    Map<String, List<String>> resultado = new HashMap<>();
-    resultado.put("opciones", opciones);
-    resultado.put("hashes", hashes);
-
-    return resultado;
-}
+    }            
 
     private void opcionesIluminacion(Box wallLeft, Box wallBack) {
         Stage secondaryStage = new Stage();       
@@ -1996,7 +2196,7 @@ private Map<String, List<String>> cargarOpcionesDesdeBD() {
 
         Label techoLabel = new Label("Techo");        
         ComboBox<String> techoComboBox = new ComboBox<>();
-        techoComboBox.getItems().addAll("Bombillo", "Ventana", "sin luz");
+        techoComboBox.getItems().addAll("Bombillo", "sin luz");
 
         Button aplicarButton = new Button("Aplicar");
         aplicarButton.setVisible(false); // Inicialmente oculto
@@ -2046,17 +2246,40 @@ public void configuracionIluminacion(String pared1, String pared2, String pared3
         luzPared1.setTranslateZ(wallBack.getTranslateZ());
         root3D.getChildren().add(luzPared1);
     } else if ("Ventana".equals(pared1)) {
-        // Aquí podrías implementar una luz que simule la luz entrando por una ventana
-        // Esto podría ser una luz direccional o un PointLight más grande
+        Ventana newVentana = new Ventana();
+        newVentana.setTranslateX(wallBack.getTranslateX());
+        newVentana.setTranslateY(wallBack.getTranslateY());
+        newVentana.setTranslateZ(wallBack.getTranslateZ() - 5);
+        rotateObjectY(newVentana);
+        togglePositionsLock();
+        root3D.getChildren().add(newVentana);
+        PointLight luzPared1 = new PointLight(Color.WHITE);
+        luzPared1.setTranslateX(wallBack.getTranslateX());
+        luzPared1.setTranslateY(wallBack.getTranslateY());
+        luzPared1.setTranslateZ(wallBack.getTranslateZ() - 5);
+        root3D.getChildren().add(luzPared1);        
+        
     }
 
-    // Repetir para las otras paredes y el techo
     if ("Bombillo".equals(pared2)) {
         PointLight luzPared2 = new PointLight(Color.WHITE);
         luzPared2.setTranslateX(wallLeft.getTranslateX());
         luzPared2.setTranslateY(-wallLeft.getTranslateY()*0.8);
         luzPared2.setTranslateZ(wallLeft.getTranslateX());
         root3D.getChildren().add(luzPared2);
+    } else if ("Ventana".equals(pared2)) {
+        Ventana newVentana = new Ventana();
+        newVentana.setTranslateX(wallLeft.getTranslateX() + 5);
+        newVentana.setTranslateY(wallLeft.getTranslateY());
+        newVentana.setTranslateZ(wallLeft.getTranslateZ());
+        togglePositionsLock();
+        root3D.getChildren().add(newVentana);
+        PointLight luzPared2 = new PointLight(Color.WHITE);
+        luzPared2.setTranslateX(wallLeft.getTranslateX() + 5);
+        luzPared2.setTranslateY(wallLeft.getTranslateY());
+        luzPared2.setTranslateZ(wallLeft.getTranslateZ());
+        root3D.getChildren().add(luzPared2);        
+        
     }
 
     if ("Bombillo".equals(pared3)) {
@@ -2065,6 +2288,21 @@ public void configuracionIluminacion(String pared1, String pared2, String pared3
         luzPared3.setTranslateY(-wallLeft.getTranslateY()*0.8);
         luzPared3.setTranslateZ(wallLeft.getTranslateZ());
         root3D.getChildren().add(luzPared3);
+    } else if ("Ventana".equals(pared3)) {
+        Ventana newVentana = new Ventana();
+        newVentana.setTranslateX(-wallLeft.getTranslateX() + 5);
+        newVentana.setTranslateY(wallLeft.getTranslateY());
+        newVentana.setTranslateZ(wallLeft.getTranslateZ());
+        rotateObjectY(newVentana);
+        rotateObjectY(newVentana);
+        togglePositionsLock();
+        root3D.getChildren().add(newVentana);
+        PointLight luzPared3 = new PointLight(Color.WHITE);
+        luzPared3.setTranslateX(-wallLeft.getTranslateX() + 5);
+        luzPared3.setTranslateY(wallLeft.getTranslateY());
+        luzPared3.setTranslateZ(wallLeft.getTranslateZ());
+        root3D.getChildren().add(luzPared3);        
+        
     }
 
     if ("Bombillo".equals(techo)) {
@@ -2076,9 +2314,20 @@ public void configuracionIluminacion(String pared1, String pared2, String pared3
     }
 }
 
+public void addItemToScene(Group itemGroup) {
+    itemGroup.setTranslateX(0);
+    itemGroup.setTranslateY(-500);
+    itemGroup.setTranslateZ(0);
+    itemGroup.setOnMousePressed(this::handleGroupPressed);
+    itemGroup.setOnMouseDragged(this::handleGroupPressed);
+    setupContextMenu(itemGroup);
+    root3D.getChildren().add(itemGroup);
+}
+
     private void abrirCrearItem() {
+        CrearItem crearItem = new CrearItem(this);
         Stage crearItemStage = new Stage();
-        CrearItem crearItem = new CrearItem();
+        crearItem.start(crearItemStage);
 
         try {
             crearItem.start(crearItemStage);
@@ -2088,6 +2337,8 @@ public void configuracionIluminacion(String pared1, String pared2, String pared3
 
         crearItemStage.show();
     }
+
+    
 
     public static void main(String[] args) {
         launch(args);

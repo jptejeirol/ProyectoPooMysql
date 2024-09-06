@@ -313,7 +313,7 @@ public class CrearDiseño extends javax.swing.JFrame {
             javax.swing.JOptionPane.showMessageDialog(this, "¡Tu item ha sido guardado!");
         }else if (indice==1 && !"".equals(TextNombre.getText()) && !"".equals(TextBase.getText()) && !"".equals(TextAltura.getText()) && !"".equals(TextProfundidad.getText())){
             Room room = new Room(TextNombre.getText(), Double.parseDouble(TextBase.getText()), Double.parseDouble(TextAltura.getText()), Double.parseDouble(TextProfundidad.getText()));
-            servRoom.guardar_diseño(ServicesUsuario.getUsuario(), room);
+            servRoom.guardar_room(ServicesUsuario.getUsuario(), room);
             ServicesRoom.setRooms(room);
             javax.swing.JOptionPane.showMessageDialog(this, "¡Tu Room ha sido guardada!");
         }else{javax.swing.JOptionPane.showMessageDialog(this, "Has dejado un valo nulo");}

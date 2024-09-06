@@ -1,71 +1,24 @@
 package view;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.zip.CRC32;
-import javafx.application.Application;
-import javafx.geometry.Insets;
-import javafx.scene.Group;
-import javafx.scene.Scene;
-import javafx.scene.SubScene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
-import javafx.scene.shape.Cylinder;
-import javafx.scene.shape.Shape3D;
-import javafx.scene.shape.Sphere;
-import javafx.stage.Stage;
-import javafx.scene.PerspectiveCamera;
-import javafx.scene.transform.Rotate;
-import javafx.geometry.Point3D;
-import javafx.scene.control.TextArea;
-import javafx.scene.shape.MeshView;
-import javafx.scene.shape.TriangleMesh;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.charset.StandardCharsets;
-import javafx.scene.Node;
-import javafx.scene.transform.Transform;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.zip.CRC32;
 import javafx.application.Application;
-import static javafx.application.Application.launch;
 import javafx.geometry.Insets;
 import javafx.geometry.Point3D;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
 import javafx.scene.SubScene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
@@ -79,12 +32,12 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
 import javafx.scene.shape.TriangleMesh;
-import javafx.scene.transform.Transform;
 import javafx.stage.Stage;
 
 
 public class CrearItem extends Application {
-
+    
+    
     private PerspectiveCamera camera;
     private double mouseX, mouseY;
     private double rotateX = 0, rotateY = 0;
@@ -99,21 +52,24 @@ public class CrearItem extends Application {
     private Shape3D unanchoredShape = null;
 
     private Group root3D;
+    private Stage primaryStage;
     private SubScene subScene;
     private Shape3D selectedObject;
     private double objectMouseOffsetX, objectMouseOffsetY;
+    
+    private RooMakingJFX3D parentWindow;
 
-    private Box floor = createFloor();
-    private Box wallBack = createWallBack();
-    private Box wallLeft = createWallLeft();
     private TextArea hashArea;
     private Button GenerarHashBtn, RegenerarEscenaBtn, fijarposicionesBtn;
+    
+    private Group rootJFX3D;
 
     @Override
     public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
         root3D = new Group();
         subScene = new SubScene(root3D, 600, 400, true, javafx.scene.SceneAntialiasing.BALANCED);
-        subScene.setFill(Color.LIGHTGRAY);
+        subScene.setFill(Color.BEIGE);
 
         camera = new PerspectiveCamera(true);
         camera.setTranslateZ(-2000);
@@ -123,7 +79,6 @@ public class CrearItem extends Application {
         camera.setFieldOfView(50);
         subScene.setCamera(camera);
 
-        root3D.getChildren().addAll(floor, wallBack, wallLeft);
 
         subScene.setOnMousePressed(this::handleMousePressed);
         subScene.setOnMouseDragged(this::handleMouseDragged);
@@ -134,37 +89,29 @@ public class CrearItem extends Application {
         HBox mainLayout = new HBox(10);
         mainLayout.setPadding(new Insets(10));
         mainLayout.getChildren().addAll(subScene, controlPanel);
+        
+        mainLayout.setStyle(
+            "-fx-background-color: linear-gradient(to bottom right, rgb(245,245,220), rgb(162,217,206)); " +  // Fondo degradado de beige a verde claro
+            "-fx-border-color: rgb(210,180,140); " +  // Color del borde tierra
+            "-fx-border-width: 2px; " +  // Grosor del borde
+            "-fx-border-radius: 10px; " +  // Bordes redondeados
+            "-fx-background-radius: 10px; " +  // Bordes redondeados para el fondo
+            "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.5, 0, 0);"  // Efecto de sombra
+        );        
 
         Scene mainScene = new Scene(mainLayout);
 
         primaryStage.setTitle("RoomDesigner3D");
         primaryStage.setScene(mainScene);
         primaryStage.setWidth(800);
-        primaryStage.setHeight(600);
+        primaryStage.setHeight(460);
         primaryStage.show();
 
         root3D.requestFocus();
     }
-
-    private Box createFloor() {
-        Box floor = new Box(3000, 10, 4000);
-        floor.setMaterial(new PhongMaterial(Color.GRAY));
-        floor.setTranslateY(floorY);
-        return floor;
-    }
-
-    private Box createWallBack() {
-        Box wallBack = new Box(3000, 2500, 10);
-        wallBack.setMaterial(new PhongMaterial(Color.GRAY));
-        wallBack.setTranslateZ(2000);
-        return wallBack;
-    }
-
-    private Box createWallLeft() {
-        Box wallLeft = new Box(10, 2500, 4000);
-        wallLeft.setMaterial(new PhongMaterial(Color.GRAY));
-        wallLeft.setTranslateX(-1500);
-        return wallLeft;
+    
+    public CrearItem(RooMakingJFX3D parentWindow) {
+        this.parentWindow = parentWindow;
     }
 
     private VBox createControlPanel() {
@@ -172,62 +119,163 @@ public class CrearItem extends Application {
         controlPanel.setPadding(new Insets(10));
 
         Button fixDistancesBtn = new Button("Fijar Distancias");
-        fixDistancesBtn.setOnAction(event -> fixDistances());
-
-        GenerarHashBtn = new Button("Generar Hash");
-        GenerarHashBtn.setOnAction(event -> generateHash());
-
-        RegenerarEscenaBtn = new Button("Regenerar Escena");
-        RegenerarEscenaBtn.setOnAction(event -> regenerateScene());
-
-        hashArea = new TextArea();
-  
+        fixDistancesBtn.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(126,188,137), rgb(162,217,206));" + // Degradado de verde
+            "-fx-text-fill: white;" +  // Texto en blanco
+            "-fx-font-weight: bold;" +  // Texto en negrita
+            "-fx-border-color: rgb(126,188,137);" +  // Borde del botón
+            "-fx-border-radius: 5;" +  // Bordes redondeados
+            "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
+        );        
+        fixDistancesBtn.setOnAction(event -> fixDistances()); 
 
         Label titleLabel = new Label("Seleccionar objeto:");
         ComboBox<String> objectSelector = new ComboBox<>();
         objectSelector.getItems().addAll("Esfera", "Cilindro", "Cubo", "Poliedro", "Tetraedro", "Piramide");
+        objectSelector.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(162,217,206), rgb(126,188,137));" +  // Degradado de verde claro a verde suave
+            "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
+            "-fx-border-radius: 5;"  // Bordes redondeados
+        );        
         objectSelector.setOnAction(e -> addObject(objectSelector.getValue()));
+        
+        Button roomMakingBtn = new Button("RooMaking");
+        roomMakingBtn.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(126,188,137), rgb(162,217,206));" + // Degradado de verde
+            "-fx-text-fill: white;" +  // Texto en blanco
+            "-fx-font-weight: bold;" +  // Texto en negrita
+            "-fx-border-color: rgb(126,188,137);" +  // Borde del botón
+            "-fx-border-radius: 5;" +  // Bordes redondeados
+            "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
+        );        
+        
+        roomMakingBtn.setOnAction(e -> handleRoomMaking());        
 
-        controlPanel.getChildren().addAll(titleLabel, objectSelector, fixDistancesBtn, GenerarHashBtn, RegenerarEscenaBtn, hashArea);
+        controlPanel.setAlignment(Pos.CENTER);        
+        controlPanel.getChildren().addAll(titleLabel, objectSelector, fixDistancesBtn, roomMakingBtn);
+        controlPanel.setStyle(
+            "-fx-background-color: rgb(245,245,220);" +  // Fondo beige claro
+            "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
+            "-fx-border-width: 2px;" +  // Grosor del borde
+            "-fx-border-radius: 10px;"  // Bordes redondeados
+        );        
         return controlPanel;
+    }
+    
+    private void handleRoomMaking() {
+        // Crear un nuevo Group con todos los objetos de la escena actual
+        Group itemGroup = new Group(root3D.getChildren());
+        
+        // Enviar el Group a la ventana padre
+        parentWindow.addItemToScene(itemGroup);
+        
+        // Cerrar la ventana actual
+        primaryStage.close();
     }
 
     private void addObject(String objectType) {
-        Shape3D newObject = null;
+        Stage dialog = new Stage();
+        dialog.setTitle("Ingresar dimensiones para " + objectType);
+
+        final Shape3D[] newObject = new Shape3D[1]; // Utiliza un array de un solo elemento para que sea efectivamente final
+        VBox dialogVBox = new VBox(10);
+        dialogVBox.setPadding(new Insets(10));
+
+        Label widthLabel = new Label("Ancho:");
+        TextField widthField = new TextField();
+        Label heightLabel = new Label("Altura:");
+        TextField heightField = new TextField();
+        Label depthLabel = new Label("Profundidad:");
+        TextField depthField = new TextField();
+        Label colorLabel = new Label("Color (en formato HEX, ej: #FF5733):");
+        TextField colorField = new TextField();
+
+        // Configurar la visibilidad de los campos según el tipo de objeto
         switch (objectType) {
-            case "Cubo":
-                newObject = new Box(600, 600, 600);
+            case "Cilindro":
+                depthLabel.setDisable(true);
+                depthField.setDisable(true);
                 break;
             case "Esfera":
-                newObject = new Esfera3D(600, Color.BLUE).getEsfera();
+                depthLabel.setDisable(true);
+                depthField.setDisable(true);
+                heightLabel.setDisable(true);
+                heightField.setDisable(true);
                 break;
-            case "Cilindro":
-                newObject = new Cilindro3D(300, 600, Color.RED).getCilindro();
-                break;
+            case "Cubo":
             case "Poliedro":
-                newObject = new PoliedroPersonalizado();
-                break;
             case "Tetraedro":
-                newObject = new Tetraedro();
-                break;
             case "Piramide":
-                newObject = new Piramide();
+                // Todos los campos son necesarios
                 break;
         }
 
-        if (newObject != null) {
-            newObject.setTranslateX(0);
-            newObject.setTranslateY(-500);
-            newObject.setTranslateZ(0);
-            newObject.setOnMousePressed(this::handleObjectPressed);
-            newObject.setOnMouseDragged(this::handleObjectDragged);
-            newObject.setOnMouseReleased(event -> selectedObject = null);
-            newObject.setOnMouseClicked(this::handleObjectClicked);
+        Button createButton = new Button("Crear");
+        createButton.setOnAction(e -> {
+            try {
+                float width = Float.parseFloat(widthField.getText());
+                float height = objectType.equals("Esfera") ? width : Float.parseFloat(heightField.getText());
+                float depth = (objectType.equals("Esfera") || objectType.equals("Cilindro")) ? height : Float.parseFloat(depthField.getText());
+                Color color = Color.web(colorField.getText());
 
-            setupContextMenu(newObject);
-            root3D.getChildren().add(newObject);
-            shapes.add(newObject);
-        }
+                // Crear el objeto según el tipo y las propiedades
+                switch (objectType) {
+                    case "Cubo":
+                        newObject[0] = new Box(width, height, depth);
+                        newObject[0].setMaterial(new PhongMaterial(color));
+                        break;
+                    case "Esfera":
+                        newObject[0] = new Esfera3D(width, color).getEsfera();
+                        break;
+                    case "Cilindro":
+                        newObject[0] = new Cilindro3D(width, height, color).getCilindro();
+                        break;
+                    case "Poliedro":
+                        newObject[0] = new PoliedroPersonalizado(width, height, depth, color);
+                        break;
+                    case "Tetraedro":
+                        newObject[0] = new Tetraedro(width, height, depth, color);
+                        break;
+                    case "Piramide":
+                        newObject[0] = new Piramide(width, height, depth, color);
+                        break;
+                }
+
+                // Agregar el objeto a la escena
+                if (newObject[0] != null) {
+                    addObjectToScene(newObject[0]);
+                }
+
+                dialog.close();
+            } catch (IllegalArgumentException ex) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("Entrada inválida");
+                alert.setContentText("Por favor, ingrese dimensiones y un color válidos.");
+                alert.showAndWait();
+            }
+        });
+
+        dialogVBox.getChildren().addAll(widthLabel, widthField, heightLabel, heightField, depthLabel, depthField, colorLabel, colorField, createButton);
+        Scene dialogScene = new Scene(dialogVBox, 300, 300);
+        dialog.setScene(dialogScene);
+        dialog.show();
+    }
+
+
+    // Método para añadir el objeto a la escena
+    private void addObjectToScene(Shape3D newObject) {
+        newObject.setTranslateX(0);
+        newObject.setTranslateY(-500);
+        newObject.setTranslateZ(0);
+        newObject.setOnMousePressed(this::handleObjectPressed);
+        newObject.setOnMouseDragged(this::handleObjectDragged);
+        newObject.setOnMouseReleased(event -> selectedObject = null);
+        newObject.setOnMouseClicked(this::handleObjectClicked);
+
+        setupContextMenu(newObject);
+        root3D.getChildren().add(newObject);
+        shapes.add(newObject);
     }
 
     private void setupContextMenu(Shape3D object) {
@@ -347,168 +395,104 @@ public class CrearItem extends Application {
         camera.setTranslateZ(camera.getTranslateZ() * zoomFactor);
     }
 
-private void generateHash() {
-    Map<String, double[]> sceneData = new HashMap<>();
-    for (Shape3D shape : shapes) {
-        sceneData.put(shape.getClass().getSimpleName() + shapes.indexOf(shape),
-                new double[]{shape.getTranslateX(), shape.getTranslateY(), shape.getTranslateZ()});
-    }
+    private Shape3D createShapeFromKey(String key, float width, float height, float depth, Color color) {
+        Shape3D newObject = null;
 
-    try {
-        ObjectMapper mapper = new ObjectMapper();
-        String json = mapper.writeValueAsString(sceneData);
-
-        // Generar hash CRC32 del JSON
-        CRC32 crc = new CRC32();
-        crc.update(json.getBytes(StandardCharsets.UTF_8));
-        long hashValue = crc.getValue();
-        
-        // Codificar el JSON completo en Base64
-        String encodedJson = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
-        hashArea.setText(encodedJson);
-    } catch (JsonProcessingException e) {
-        e.printStackTrace();
-    }
-}
-
-private void regenerateScene() {
-    String encodedJson = hashArea.getText().trim();
-    if (encodedJson.isEmpty()) return;
-
-    try {
-        // Decodificar el JSON desde Base64
-        byte[] decodedBytes = Base64.getDecoder().decode(encodedJson);
-        String json = new String(decodedBytes, StandardCharsets.UTF_8);
-
-        // Deserializar el JSON
-        ObjectMapper mapper = new ObjectMapper();
-        Map<String, double[]> sceneData = mapper.readValue(json, new TypeReference<Map<String, double[]>>() {});
-
-        // Limpiar la escena
-        root3D.getChildren().clear();
-        shapes.clear();
-
-        // Reconstruir la escena
-            //Recontruir pieza
-        root3D.getChildren().addAll(floor, wallBack, wallLeft);
-        
-        
-        for (Map.Entry<String, double[]> entry : sceneData.entrySet()) {
-            String key = entry.getKey();
-            double[] position = entry.getValue();
-
-            Shape3D shape = createShapeFromKey(key);
-            shape.setTranslateX(position[0]);
-            shape.setTranslateY(position[1]);
-            shape.setTranslateZ(position[2]);
-                        if (shape != null) {
-            shape.setOnMousePressed(this::handleObjectPressed);
-            shape.setOnMouseDragged(this::handleObjectDragged);
-            shape.setOnMouseReleased(event -> selectedObject = null);
-            shape.setOnMouseClicked(this::handleObjectClicked);
-
-            setupContextMenu(shape);
-
-            root3D.getChildren().add(shape);
-            shapes.add(shape);
+        if (key.contains("Box")) {
+            newObject = new Box(width, height, depth);
+            newObject.setMaterial(new PhongMaterial(color));
+        } else if (key.contains("Sphere")) {
+            newObject = new Esfera3D(width / 2, color).getEsfera(); // Aquí se asume que width es el diámetro
+        } else if (key.contains("Cylinder")) {
+            newObject = new Cilindro3D(width / 2, height, color).getCilindro(); // Aquí se asume que width es el diámetro
+        } else if (key.contains("Tetrahedron")) {
+            newObject = new Tetraedro(width, height, depth, color);
+        } else if (key.contains("Pyramid")) {
+            newObject = new Piramide(width, height, depth, color);
+        } else {
+            newObject = new Box(width, height, depth); // Default shape
+            newObject.setMaterial(new PhongMaterial(color));
         }
-        }
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-}
 
-private Shape3D createShapeFromKey(String key) {
-    Shape3D newObjetc = null;
-    if (key.contains("Box")) {
-        return new Box(600, 600, 600);
-    } else if (key.contains("Sphere")) {
-        // Ajusta el color según sea necesario
-        Shape3D newObject = new Esfera3D(600, Color.BLUE).getEsfera();
-        return newObject;
-    } else if (key.contains("Cylinder")) {
-    Shape3D    newObject = new Cilindro3D(300, 600, Color.RED).getCilindro();
-    return newObject;
-    } else if (key.contains("Tetrahedron")) {
-       Shape3D newObject = new Tetraedro();
-        return newObject;
-    } else if (key.contains("Pyramid")) {
-       Shape3D newObject = new Piramide();
         return newObject;
     }
-    return new Box(600, 600, 600); // Default shape
-}
 
-    private TriangleMesh createTetrahedronMesh() {
+
+    private TriangleMesh createTetrahedronMesh(float width, float height, float depth) {
         TriangleMesh mesh = new TriangleMesh();
+
         mesh.getPoints().addAll(
             0, 0, 0, // Vertex 0
-            0, 100, 100, // Vertex 1
-            100, 100, 100, // Vertex 2
-            50, 0, 50 // Vertex 3
+            0, height, depth, // Vertex 1
+            width, height, depth, // Vertex 2
+            width / 2, 0, depth / 2 // Vertex 3
         );
+
         mesh.getFaces().addAll(
             0, 0, 1, 0, 3, 0,
             0, 0, 2, 0, 1, 0,
             1, 0, 2, 0, 3, 0,
             2, 0, 0, 0, 3, 0
         );
+
         return mesh;
     }
 
-    private TriangleMesh createPyramidMesh() {
+    private TriangleMesh createPyramidMesh(float width, float height, float depth) {
         TriangleMesh mesh = new TriangleMesh();
+
         mesh.getPoints().addAll(
             0, 0, 0, // Base vertex 0
-            0, 100, 0, // Base vertex 1
-            100, 0, 0, // Base vertex 2
-            100, 100, 0, // Base vertex 3
-            50, 50, 100 // Apex vertex
+            0, depth, 0, // Base vertex 1
+            width, 0, 0, // Base vertex 2
+            width, depth, 0, // Base vertex 3
+            width / 2, depth / 2, height // Apex vertex
         );
+
         mesh.getFaces().addAll(
             0, 0, 1, 0, 4, 0,
             1, 0, 2, 0, 4, 0,
             2, 0, 3, 0, 4, 0,
             3, 0, 0, 0, 4, 0
         );
+
         return mesh;
     }
     
         // Clase personalizada para la esfera
     class Esfera3D {
-        private Sphere esfera;
-        public Esfera3D(double radius, Color color) {
-            esfera = new Sphere(radius);
-            esfera.setMaterial(new PhongMaterial(color));
-        }
-        public Sphere getEsfera() {
-            return esfera;
-        }
+    private Sphere esfera;
+    public Esfera3D(double radius, Color color) {
+        esfera = new Sphere(radius);
+        esfera.setMaterial(new PhongMaterial(color));
     }
+    public Sphere getEsfera() {
+        return esfera;
+    }
+}
 
-    // Clase personalizada para el cilindro
-    class Cilindro3D {
-        private Cylinder cilindro;
-        public Cilindro3D(double radius, double height, Color color) {
-            cilindro = new Cylinder(radius, height);
-            cilindro.setMaterial(new PhongMaterial(color));
-        }
-        public Cylinder getCilindro() {
-            return cilindro;
-        }
+// Clase personalizada para el cilindro
+class Cilindro3D {
+    private Cylinder cilindro;
+    public Cilindro3D(double radius, double height, Color color) {
+        cilindro = new Cylinder(radius, height);
+        cilindro.setMaterial(new PhongMaterial(color));
     }
+    public Cylinder getCilindro() {
+        return cilindro;
+    }
+}
 
 public class PoliedroPersonalizado extends MeshView {
-
-    public PoliedroPersonalizado() {
+    public PoliedroPersonalizado(float width, float height, float depth, Color color) {
         // Definir los puntos y las caras del poliedro personalizado
         float[] puntos = {
-            0, 100, 0,    // A
-            -100, 0, 100,   // B
-            100, 0, 100,    // C
-            100, 0, -100,   // D
-            -100, 0, -100,  // E
-            0, -100, 0    // F
+            0, height / 2, 0,                // A
+            -width / 2, 0, depth / 2,        // B
+            width / 2, 0, depth / 2,         // C
+            width / 2, 0, -depth / 2,        // D
+            -width / 2, 0, -depth / 2,       // E
+            0, -height / 2, 0                // F
         };
         int[] caras = {
             0, 0, 1, 0, 2, 0,  // ABC
@@ -521,39 +505,30 @@ public class PoliedroPersonalizado extends MeshView {
             4, 0, 5, 0, 1, 0   // EFB
         };
 
-        // Crear el Mesh y asignarle los puntos y caras
         TriangleMesh mesh = new TriangleMesh();
         mesh.getPoints().addAll(puntos);
         mesh.getFaces().addAll(caras);
 
-        // Añadir coordenadas de textura (obligatorio, aunque no uses texturas)
         float[] texCoords = {
-            0.5f, 0, // Coordenadas de textura de placeholder
-            0, 1, 
-            1, 1
+            0.5f, 0, 0, 1, 1, 1
         };
         mesh.getTexCoords().addAll(texCoords);
 
-        // Asignar el mesh a la vista
         this.setMesh(mesh);
-
-        // Configurar material con color
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(Color.BLUE);
+        material.setDiffuseColor(color);
         this.setMaterial(material);
     }
 }
 
-
+// Clase Tetraedro
 public class Tetraedro extends MeshView {
-
-    public Tetraedro() {
-        // Definir los puntos y las caras del tetraedro
+    public Tetraedro(float width, float height, float depth, Color color) {
         float[] puntos = {
-            0, 100, 0,    // Vértice 0
-            -50, -50, 50, // Vértice 1
-            50, -50, 50,  // Vértice 2
-            50, -50, -50  // Vértice 3
+            0, height / 2, 0,                     // Vértice superior
+            -width / 2, -height / 2, depth / 2,   // Vértice base 1
+            width / 2, -height / 2, depth / 2,    // Vértice base 2
+            width / 2, -height / 2, -depth / 2    // Vértice base 3
         };
         int[] caras = {
             0, 0, 1, 0, 2, 0,  // Cara 1
@@ -562,95 +537,55 @@ public class Tetraedro extends MeshView {
             1, 0, 2, 0, 3, 0   // Cara 4
         };
 
-        // Crear el Mesh y asignarle los puntos y caras
         TriangleMesh mesh = new TriangleMesh();
         mesh.getPoints().addAll(puntos);
         mesh.getFaces().addAll(caras);
 
-        // Añadir coordenadas de textura (obligatorio, aunque no uses texturas)
         float[] texCoords = {
-            0.5f, 0, // Coordenadas de textura de placeholder
-            0, 1, 
-            1, 1
+            0.5f, 0, 0, 1, 1, 1
         };
         mesh.getTexCoords().addAll(texCoords);
 
-        // Asignar el mesh a la vista
         this.setMesh(mesh);
-
-        // Configurar material con color
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(Color.GREEN);
+        material.setDiffuseColor(color);
         this.setMaterial(material);
     }
 }
-public class Piramide extends MeshView {
 
-    public Piramide() {
-        // Definir los puntos y las caras de la pirámide
+// Clase Pirámide
+public class Piramide extends MeshView {
+    public Piramide(float width, float height, float depth, Color color) {
         float[] puntos = {
-            0, 100, 0,    // Vértice superior
-            -50, -50, 50, // Vértice base 1
-            50, -50, 50,  // Vértice base 2
-            50, -50, -50, // Vértice base 3
-            -50, -50, -50 // Vértice base 4
+            0, height / 2, 0,                     // Vértice superior
+            -width / 2, -height / 2, depth / 2,   // Vértice base 1
+            width / 2, -height / 2, depth / 2,    // Vértice base 2
+            width / 2, -height / 2, -depth / 2,   // Vértice base 3
+            -width / 2, -height / 2, -depth / 2   // Vértice base 4
         };
         int[] caras = {
             0, 0, 1, 0, 2, 0,  // Cara 1
             0, 0, 2, 0, 3, 0,  // Cara 2
             0, 0, 3, 0, 4, 0,  // Cara 3
+            0, 0, 4, 0, 1, 0,  // Cara 4
             1, 0, 2, 0, 3, 0,  // Base 1
             1, 0, 3, 0, 4, 0   // Base 2
         };
 
-        // Crear el Mesh y asignarle los puntos y caras
         TriangleMesh mesh = new TriangleMesh();
         mesh.getPoints().addAll(puntos);
         mesh.getFaces().addAll(caras);
 
-        // Añadir coordenadas de textura (obligatorio, aunque no uses texturas)
         float[] texCoords = {
-            0.5f, 0, // Coordenadas de textura de placeholder
-            0, 1, 
-            1, 1
+            0.5f, 0, 0, 1, 1, 1
         };
         mesh.getTexCoords().addAll(texCoords);
 
-        // Asignar el mesh a la vista
         this.setMesh(mesh);
-
-        // Configurar material con color
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(Color.YELLOW);
+        material.setDiffuseColor(color);
         this.setMaterial(material);
     }
 }
-
-
-public  String getSceneHash(Scene scene) {
-        StringBuilder sb = new StringBuilder();
-
-        // Iterar sobre los nodos en la escena
-        for (Node node : scene.getRoot().getChildrenUnmodifiable()) {
-            if (node instanceof Shape3D) {
-                Shape3D shape = (Shape3D) node;
-                
-                // Obtener tamaño, color y posición
-                String type = shape.getClass().getSimpleName();
-                Transform transform = shape.getLocalToSceneTransform();
-                Color color = (shape.getMaterial() instanceof PhongMaterial) ?
-                        ((PhongMaterial) shape.getMaterial()).getDiffuseColor() :
-                        Color.TRANSPARENT;
-                
-                sb.append(type).append("|")
-                  .append(shape.getTranslateX()).append(",")
-                  .append(shape.getTranslateY()).append(",")
-                  .append(shape.getTranslateZ()).append("|")
-                  .append(color.toString()).append("|");
-            }
-        }
-
-        return sb.toString();
-    }
 
 }

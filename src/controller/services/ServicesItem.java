@@ -1,6 +1,5 @@
 package controller.services;
 
-import static com.mysql.cj.conf.PropertyKey.USER;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -37,7 +36,7 @@ public class ServicesItem extends Services {
     
      public List<Item> getItemsByUsuario(String usuario) {
         List<Item> itemsDb = new ArrayList<>();
-        String query = "SELECT * FROM item WHERE usuario = ?";
+        String query = "SELECT nombre, base, altura, profundidad FROM item WHERE usuario = ?";
 
         try (Connection conn = con;
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -82,6 +81,30 @@ public class ServicesItem extends Services {
         } 
         catch (SQLException ex){
             System.out.println("Hubo un error al momento de guardar los datos. " + ex.getMessage());
+        }
+    }
+
+    public void eliminar_item(String Username, Item item) {
+        try {
+            PreparedStatement consulta;
+            String nombreObjeto = item.getNombreObjeto();
+
+            // Preparar la consulta para eliminar el registro que coincide con el usuario y el nombre del objeto
+            consulta = con.prepareStatement("DELETE FROM " + this.tabla_Item + " WHERE usuario = ? AND nombre = ?");
+            consulta.setString(1, Username);
+            consulta.setString(2, nombreObjeto);
+
+            int filasAfectadas = consulta.executeUpdate();
+
+            // Verificar si se eliminó algún registro
+            if (filasAfectadas > 0) {
+                System.out.println("El diseño fue eliminado correctamente.");
+            } else {
+                System.out.println("No se encontró ningún diseño para eliminar con esos parámetros.");
+            }
+
+        } catch (SQLException ex) {
+            System.out.println("Hubo un error al eliminar el diseño. " + ex.getMessage());
         }
     }
     
