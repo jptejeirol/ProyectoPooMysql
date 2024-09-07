@@ -58,6 +58,7 @@ import java.util.Random;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.PointLight;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -65,6 +66,7 @@ import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.paint.Material;
 import javafx.stage.Modality;
+import javafx.util.Pair;
 
 public class RooMakingJFX3D extends Application {
 
@@ -423,111 +425,127 @@ public class RooMakingJFX3D extends Application {
         );        
         return controlPanel;
     }
-    
+
 private void OrdenarObjetos() {
     Random random = new Random();
-
-    double rangoMinX = -0.8 * wallBack.getWidth() / 2;
-    double rangoMaxX = 0.8 * wallBack.getWidth() / 2;
-    double rangoMinZ = -0.8 * wallLeft.getDepth() / 2;
-    double rangoMaxZ = 0.8 * wallLeft.getDepth() / 2;
-    double margenSeguridad = 500;
-
+    double rangoMinX = -wallBack.getWidth() / 2;
+    double rangoMaxX = wallBack.getWidth() / 2;
+    double rangoMinZ = -wallLeft.getDepth() / 2;
+    double rangoMaxZ = wallLeft.getDepth() / 2;
+    double margenSeguridad = 50; // Margen de seguridad para evitar que los objetos toquen las paredes
     List<Movible> colocados = new ArrayList<>();
+    List<Pair<Double, Double>> espaciosOcupadosX = new ArrayList<>();
+    List<Pair<Double, Double>> espaciosOcupadosZ = new ArrayList<>();
+
+    // Verificación de la presencia de luces y ventanas
+    boolean contieneLuzPared1 = root3D.getChildren().stream().anyMatch(node -> "luzPared1".equals(node.getId()));
+    boolean contieneLuzPared2 = root3D.getChildren().stream().anyMatch(node -> "luzPared2".equals(node.getId()));
+    boolean contieneLuzPared3 = root3D.getChildren().stream().anyMatch(node -> "luzPared3".equals(node.getId()));
+    boolean contieneLuzTecho = root3D.getChildren().stream().anyMatch(node -> "luzTecho".equals(node.getId()));
+    boolean contieneVentana1 = root3D.getChildren().stream().anyMatch(node -> "newVentana1".equals(node.getId()));
+    boolean contieneVentana2 = root3D.getChildren().stream().anyMatch(node -> "newVentana2".equals(node.getId()));
+    boolean contieneVentana3 = root3D.getChildren().stream().anyMatch(node -> "newVentana3".equals(node.getId()));
 
     for (javafx.scene.Node node : root3D.getChildren()) {
-        if (node instanceof Movible movible) {
-
+        if (node instanceof Movible) {
+            Movible movible = (Movible) node;
             if (!movible.isFijo()) {
                 continue;
             }
 
-            String clase = movible.getClass().getName();
-            double objWidth = movible.getBoundsInParent().getWidth();
-            double objDepth = movible.getBoundsInParent().getDepth();
             boolean solapado;
+            int intentos = 0;
+            int maxIntentos = 100;
 
             do {
                 solapado = false;
-                double nuevaX, nuevaZ;
-
-                // Generar posiciones cercanas a los límites sin salirse
-                if (random.nextBoolean()) {
-                    nuevaX = (random.nextBoolean()) ? rangoMinX + objWidth / 5.5 : rangoMaxX - objWidth / 5.5;
-                    nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble();
-                } else {
-                    nuevaZ = (random.nextBoolean()) ? rangoMinZ + objDepth / 3.1 : rangoMaxZ - objDepth / 3.1;
-                    nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
-                    rotateObjectY((Group)node);
+                intentos++;
+                if (intentos > maxIntentos) {
+                    System.out.println("No se encontró una posición adecuada tras " + maxIntentos + " intentos.");
+                    break;
                 }
 
-                // Ajustar nuevaX y nuevaZ para acercar los objetos a los límites sin salirse
-                nuevaX = Math.max(rangoMinX + objWidth / 5.5, Math.min(nuevaX, rangoMaxX - objWidth / 5.5));
-                nuevaZ = Math.max(rangoMinZ + objDepth / 3.1, Math.min(nuevaZ, rangoMaxZ - objDepth / 3.1));
-                
-                switch (clase) {
-                    case "CamaSimple":
-                        break;                        
-                    case "CamaDoble":
+                Bounds dimensiones = movible.getBoundsInParent();
+                double anchura = dimensiones.getWidth();
+                double profundidad = dimensiones.getDepth();
+                double altura = dimensiones.getHeight();
 
-                        break;
+                double efectivoMinX = rangoMinX + anchura / 2 + margenSeguridad;
+                double efectivoMaxX = rangoMaxX - anchura / 2 - margenSeguridad;
+                double efectivoMinZ = rangoMinZ + profundidad / 2 + margenSeguridad;
+                double efectivoMaxZ = rangoMaxZ - profundidad / 2 - margenSeguridad;
 
-                    case "Armario":
+                double nuevaX = 0, nuevaZ = 0;
+                int rotacion = 0;
 
-                        break;
+                // Restricciones basadas en el tipo de objeto y la iluminación/ventanas
+                if (movible instanceof Armario) {
+                    // Armario: debe ir en una pared sin luz
+                    if (!contieneLuzPared1) {
+                        nuevaX = rangoMinX;
+                        rotacion = 0;
+                    } else if (!contieneLuzPared2) {
+                        nuevaZ = rangoMinZ;
+                        rotacion = 270;
+                    } else {
+                        nuevaX = rangoMaxX;
+                        rotacion = 180;
+                    }
+                } else if (movible instanceof Mueble) {
+                    // Mueble: debe ir en una pared opuesta a una pared con luz o ventana
+                    if (contieneLuzPared1 || contieneVentana1) {
+                        nuevaX = rangoMaxX;
+                        rotacion = 180;
+                    } else if (contieneLuzPared2 || contieneVentana2) {
+                        nuevaZ = rangoMaxZ;
+                        rotacion = 90;
+                    } else {
+                        nuevaX = rangoMinX;
+                        rotacion = 0;
+                    }
+                } else if (movible instanceof CamaSimple || movible instanceof CamaDoble) {
+                    // Cama: preferentemente en una pared sin ventana
+                    if (!contieneVentana1) {
+                        nuevaX = rangoMinX;
+                        rotacion = 0;
+                    } else if (!contieneVentana2) {
+                        nuevaZ = rangoMinZ;
+                        rotacion = 270;
+                    } else {
+                        nuevaX = rangoMaxX;
+                        rotacion = 180;
+                    }
+                } else if (movible instanceof Mesa) {
+                    // Mesa: preferentemente en una pared con luz
+                    if (contieneLuzPared1) {
+                        nuevaX = rangoMinX;
+                        rotacion = 0;
+                    } else if (contieneLuzPared2) {
+                        nuevaZ = rangoMinZ;
+                        rotacion = 270;
+                    } else {
+                        nuevaX = rangoMaxX;
+                        rotacion = 180;
+                    }
+                } else {
+                    // Otros objetos sin restricciones específicas
+                    if (random.nextBoolean()) {
+                        nuevaX = random.nextBoolean() ? efectivoMinX : efectivoMaxX;
+                        nuevaZ = efectivoMinZ + (efectivoMaxZ - efectivoMinZ) * random.nextDouble();
+                        rotacion = (nuevaX == efectivoMinX) ? 0 : 180;
+                    } else {
+                        nuevaZ = random.nextBoolean() ? efectivoMinZ : efectivoMaxZ;
+                        nuevaX = efectivoMinX + (efectivoMaxX - efectivoMinX) * random.nextDouble();
+                        rotacion = (nuevaZ == efectivoMinZ) ? 270 : 90;
+                    }
+                }
 
-                    case "Mueble":
-                        break;                        
-                    case "Mesa":
+                movible.setRotationAxis(Rotate.Y_AXIS);
+                movible.setRotate(rotacion);
 
-                        break;
-
-                    case "MesaDeNoche":
-                        // Buscar una cama cercana para colocar la mesa de noche al lado
-                        for (Movible colocado : colocados) {
-                            if (colocado.getClass().getName().equals("CamaSimple") || colocado.getClass().getName().equals("CamaDoble")) {
-                                nuevaX = colocado.getTranslateX() + (objWidth / 2 + colocado.getBoundsInParent().getWidth() / 2);
-                                nuevaZ = colocado.getTranslateZ();
-                                break;
-                            }
-                        }
-                        break;
-
-                    case "Silla":
-                        // Buscar una mesa cercana para colocar la silla al lado
-                        for (Movible colocado : colocados) {
-                            if (colocado.getClass().getName().equals("Mesa")) {
-                                nuevaX = colocado.getTranslateX() + (objWidth / 2 + colocado.getBoundsInParent().getWidth() / 2);
-                                nuevaZ = colocado.getTranslateZ();
-                                break;
-                            }
-                        }
-                        break;
-
-                    case "TV":
-                    case "TVGrande":
-                        // Buscar un mueble o mesa para colocar la TV encima o al frente
-                        for (Movible colocado : colocados) {
-                            if (colocado.getClass().getName().equals("Mueble") || colocado.getClass().getName().equals("Mesa")) {
-                                nuevaX = colocado.getTranslateX();
-                                nuevaZ = colocado.getTranslateZ() + (objDepth / 2 + colocado.getBoundsInParent().getDepth() / 2);
-                                movible.setTranslateY(colocado.getBoundsInParent().getMaxY());
-                                break;
-                            }
-                        }
-                        break;
-
-                    default:
-                        nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
-                        nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble();
-                        break;
-                }                
-
-                // Verificar solapamiento con otros objetos
+                // Verificar solapamiento
                 for (Movible colocado : colocados) {
-                    double distancia = Math.sqrt(Math.pow(colocado.getTranslateX() - nuevaX, 2) +
-                                                 Math.pow(colocado.getTranslateZ() - nuevaZ, 2));
-                    if (distancia < margenSeguridad) {
+                    if (isOverlapping(movible, colocado)) {
                         solapado = true;
                         break;
                     }
@@ -536,14 +554,150 @@ private void OrdenarObjetos() {
                 if (!solapado) {
                     movible.setTranslateX(nuevaX);
                     movible.setTranslateZ(nuevaZ);
-                    //movible.setTranslateY(0);
+                    movible.setTranslateY(wallBack.getHeight() / 2 - altura / 2);
                     colocados.add(movible);
+                    espaciosOcupadosX.add(new Pair<>(nuevaX - anchura / 2, nuevaX + anchura / 2));
+                    espaciosOcupadosZ.add(new Pair<>(nuevaZ - profundidad / 2, nuevaZ + profundidad / 2));
                 }
-
             } while (solapado);
         }
     }
 }
+
+    
+/*private void OrdenarObjetos() {
+    Random random = new Random();
+    double rangoMinX = -wallBack.getWidth() / 2;
+    double rangoMaxX = wallBack.getWidth() / 2;
+    double rangoMinZ = -wallLeft.getDepth() / 2;
+    double rangoMaxZ = wallLeft.getDepth() / 2;
+    double margenSeguridad = 50; // Margen de seguridad para evitar que los objetos toquen las paredes
+    List<Movible> colocados = new ArrayList<>();
+    List<Pair<Double, Double>> espaciosOcupadosX = new ArrayList<>();
+    List<Pair<Double, Double>> espaciosOcupadosZ = new ArrayList<>();
+    
+    boolean contieneLuzPared1 = root3D.getChildren().stream()
+    .anyMatch(node -> "luzPared1".equals(node.getId()));
+    boolean contieneLuzPared2 = root3D.getChildren().stream()
+    .anyMatch(node -> "luzPared2".equals(node.getId()));
+    boolean contieneLuzPared3 = root3D.getChildren().stream()
+    .anyMatch(node -> "luzPared3".equals(node.getId()));
+    boolean contieneLuzTecho = root3D.getChildren().stream()
+    .anyMatch(node -> "luzTecho".equals(node.getId()));
+    boolean contieneVentana1 = root3D.getChildren().stream()
+    .anyMatch(node -> "newVentana1".equals(node.getId()));
+    boolean contieneVentana2 = root3D.getChildren().stream()
+    .anyMatch(node -> "newVentana3".equals(node.getId()));    
+    boolean contieneVentana3 = root3D.getChildren().stream()
+    .anyMatch(node -> "newVentana3".equals(node.getId()));
+    
+    for (javafx.scene.Node node : root3D.getChildren()) {
+        if (node instanceof Movible) {
+            Movible movible = (Movible) node;
+            if (!movible.isFijo()) {
+                continue;
+            }
+
+            boolean solapado;
+            int intentos = 0; // Contador de intentos
+            int maxIntentos = 100; // Número máximo de intentos
+
+            do {
+                solapado = false;
+                intentos++; // Incrementar el contador en cada intento
+
+                if (intentos > maxIntentos) {
+                    System.out.println("No se encontró una posición adecuada para el objeto tras " + maxIntentos + " intentos.");
+                    break; // Romper el ciclo si se exceden los intentos permitidos
+                }
+
+                Bounds dimensiones = movible.getBoundsInParent();
+                double anchura = dimensiones.getWidth();
+                double profundidad = dimensiones.getDepth();
+                double altura = dimensiones.getHeight();
+
+                // Calcular límites efectivos considerando las dimensiones del objeto
+                double efectivoMinX = rangoMinX + anchura / 2 + margenSeguridad;
+                double efectivoMaxX = rangoMaxX - anchura / 2 - margenSeguridad;
+                double efectivoMinZ = rangoMinZ + profundidad / 2 + margenSeguridad;
+                double efectivoMaxZ = rangoMaxZ - profundidad / 2 - margenSeguridad;
+
+                double nuevaX, nuevaZ;
+                int rotacion;
+
+                // Determinar posición y rotación
+                if (random.nextBoolean()) {
+                    nuevaX = random.nextBoolean() ? efectivoMinX : efectivoMaxX;
+                    nuevaZ = efectivoMinZ + (efectivoMaxZ - efectivoMinZ) * random.nextDouble();
+                    rotacion = (nuevaX == efectivoMinX) ? 0 : 180;
+                } else {
+                    nuevaZ = random.nextBoolean() ? efectivoMinZ : efectivoMaxZ;
+                    nuevaX = efectivoMinX + (efectivoMaxX - efectivoMinX) * random.nextDouble();
+                    rotacion = (nuevaZ == efectivoMinZ) ? 270 : 90;
+                }
+
+                movible.setRotationAxis(Rotate.Y_AXIS);
+                movible.setRotate(rotacion);
+
+                // Verificar solapamiento
+                for (Movible colocado : colocados) {
+                    if (isOverlapping(movible, colocado)) {
+                        solapado = true;
+                        break;
+                    }
+                }
+
+                if (!solapado) {
+                    movible.setTranslateX(nuevaX);
+                    movible.setTranslateZ(nuevaZ);
+                    movible.setTranslateY(wallBack.getHeight() / 2 - altura / 2);
+                    colocados.add(movible);
+
+                    // Actualizar espacios ocupados
+                    espaciosOcupadosX.add(new Pair<>(nuevaX - anchura / 2, nuevaX + anchura / 2));
+                    espaciosOcupadosZ.add(new Pair<>(nuevaZ - profundidad / 2, nuevaZ + profundidad / 2));
+                }
+            } while (solapado);
+        }
+    }
+}*/
+
+
+private boolean isOverlapping(Movible obj1, Movible obj2) {
+    Bounds bounds1 = obj1.getBoundsInParent();
+    Bounds bounds2 = obj2.getBoundsInParent();
+    return bounds1.intersects(bounds2);
+}
+
+  class Resultado {
+    private double limiteinferior;
+    private double limitesuperior;
+
+    public Resultado(double limiteinferior, double limitesuperior) {
+        this.limiteinferior = limiteinferior;
+        this.limitesuperior = limitesuperior;
+    }
+
+    public double limiteinferior() {
+        return limiteinferior;
+    }
+
+    public double limitesuperior() {
+        return limitesuperior;
+    }
+}
+    public Resultado realizarCalculos(double a, double anchoobjeto) {
+    double limiteinferior =-50+a-anchoobjeto/2; // Primer cálculo, por ejemplo, suma
+    double limitesuperior = 50+a+anchoobjeto/2;  // Segundo cálculo, por ejemplo, multiplicación
+    return new Resultado(limiteinferior, limitesuperior);
+}
+
+    public boolean isOverlapping(Node objeto1, Node objeto2) {
+    Bounds bounds1 = objeto1.getBoundsInParent();
+    Bounds bounds2 = objeto2.getBoundsInParent();
+
+    return bounds1.intersects(bounds2);
+}    
     
         public abstract class Movible extends Group {
         private boolean fijo = false;
@@ -2180,25 +2334,53 @@ private boolean isColliding(javafx.scene.Node node1, javafx.scene.Node node2) {
     }            
 
     private void opcionesIluminacion(Box wallLeft, Box wallBack) {
-        Stage secondaryStage = new Stage();       
+        Stage secondaryStage = new Stage();
         
         Label pared1Label = new Label("Pared Trasera");        
         ComboBox<String> pared1ComboBox = new ComboBox<>();
         pared1ComboBox.getItems().addAll("Bombillo", "Ventana", "sin luz");
+        pared1ComboBox.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(162,217,206), rgb(126,188,137));" +  // Degradado de verde claro a verde suave
+            "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
+            "-fx-border-radius: 5;"  // Bordes redondeados
+        );        
 
         Label pared2Label = new Label("Pared Izquierda");         
         ComboBox<String> pared2ComboBox = new ComboBox<>();
         pared2ComboBox.getItems().addAll("Bombillo", "Ventana", "sin luz");
+        pared2ComboBox.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(162,217,206), rgb(126,188,137));" +  // Degradado de verde claro a verde suave
+            "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
+            "-fx-border-radius: 5;"  // Bordes redondeados
+        );        
 
         Label pared3Label = new Label("Pared Derecha");                 
         ComboBox<String> pared3ComboBox = new ComboBox<>();
         pared3ComboBox.getItems().addAll("Bombillo", "Ventana", "sin luz");
+        pared3ComboBox.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(162,217,206), rgb(126,188,137));" +  // Degradado de verde claro a verde suave
+            "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
+            "-fx-border-radius: 5;"  // Bordes redondeados
+        );        
 
         Label techoLabel = new Label("Techo");        
         ComboBox<String> techoComboBox = new ComboBox<>();
         techoComboBox.getItems().addAll("Bombillo", "sin luz");
+        techoComboBox.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(162,217,206), rgb(126,188,137));" +  // Degradado de verde claro a verde suave
+            "-fx-border-color: rgb(210,180,140);" +  // Borde color tierra
+            "-fx-border-radius: 5;"  // Bordes redondeados
+        );        
 
         Button aplicarButton = new Button("Aplicar");
+        aplicarButton.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, rgb(126,188,137), rgb(162,217,206));" + // Degradado de verde
+            "-fx-text-fill: white;" +  // Texto en blanco
+            "-fx-font-weight: bold;" +  // Texto en negrita
+            "-fx-border-color: rgb(126,188,137);" +  // Borde del botón
+            "-fx-border-radius: 5;" +  // Bordes redondeados
+            "-fx-background-radius: 5;"  // Bordes redondeados para el fondo
+        ); 
         aplicarButton.setVisible(false); // Inicialmente oculto
 
         pared1ComboBox.setOnAction(e -> verificarSeleccion(pared1ComboBox, pared2ComboBox, pared3ComboBox, techoComboBox, aplicarButton));
@@ -2215,8 +2397,16 @@ private boolean isColliding(javafx.scene.Node node1, javafx.scene.Node node2) {
         VBox secondaryLayout = new VBox();
         secondaryLayout.setAlignment(Pos.CENTER);
         secondaryLayout.getChildren().addAll(pared1Label, pared1ComboBox, pared2Label, pared2ComboBox, pared3Label, pared3ComboBox, techoLabel, techoComboBox, aplicarButton);
+        secondaryLayout.setStyle(
+            "-fx-background-color: linear-gradient(to bottom right, rgb(245,245,220), rgb(162,217,206)); " +  // Fondo degradado de beige a verde claro
+            "-fx-border-color: rgb(210,180,140); " +  // Color del borde tierra
+            "-fx-border-width: 2px; " +  // Grosor del borde
+            "-fx-border-radius: 10px; " +  // Bordes redondeados
+            "-fx-background-radius: 10px; " +  // Bordes redondeados para el fondo
+            "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.5, 0, 0);"  // Efecto de sombra
+        );
 
-        Scene iluminacionDialog = new Scene(secondaryLayout, 300, 200);
+        Scene iluminacionDialog = new Scene(secondaryLayout, 300, 300);
         secondaryStage.setScene(iluminacionDialog);
         secondaryStage.sizeToScene();
         secondaryStage.setTitle("Opciones de Iluminación");
@@ -2246,13 +2436,13 @@ public void configuracionIluminacion(String pared1, String pared2, String pared3
         luzPared1.setTranslateZ(wallBack.getTranslateZ());
         root3D.getChildren().add(luzPared1);
     } else if ("Ventana".equals(pared1)) {
-        Ventana newVentana = new Ventana();
-        newVentana.setTranslateX(wallBack.getTranslateX());
-        newVentana.setTranslateY(wallBack.getTranslateY());
-        newVentana.setTranslateZ(wallBack.getTranslateZ() - 5);
-        rotateObjectY(newVentana);
+        Ventana newVentana1 = new Ventana();
+        newVentana1.setTranslateX(wallBack.getTranslateX());
+        newVentana1.setTranslateY(wallBack.getTranslateY());
+        newVentana1.setTranslateZ(wallBack.getTranslateZ() - 5);
+        rotateObjectY(newVentana1);
         togglePositionsLock();
-        root3D.getChildren().add(newVentana);
+        root3D.getChildren().add(newVentana1);
         PointLight luzPared1 = new PointLight(Color.WHITE);
         luzPared1.setTranslateX(wallBack.getTranslateX());
         luzPared1.setTranslateY(wallBack.getTranslateY());
@@ -2268,12 +2458,12 @@ public void configuracionIluminacion(String pared1, String pared2, String pared3
         luzPared2.setTranslateZ(wallLeft.getTranslateX());
         root3D.getChildren().add(luzPared2);
     } else if ("Ventana".equals(pared2)) {
-        Ventana newVentana = new Ventana();
-        newVentana.setTranslateX(wallLeft.getTranslateX() + 5);
-        newVentana.setTranslateY(wallLeft.getTranslateY());
-        newVentana.setTranslateZ(wallLeft.getTranslateZ());
+        Ventana newVentana2 = new Ventana();
+        newVentana2.setTranslateX(wallLeft.getTranslateX() + 5);
+        newVentana2.setTranslateY(wallLeft.getTranslateY());
+        newVentana2.setTranslateZ(wallLeft.getTranslateZ());
         togglePositionsLock();
-        root3D.getChildren().add(newVentana);
+        root3D.getChildren().add(newVentana2);
         PointLight luzPared2 = new PointLight(Color.WHITE);
         luzPared2.setTranslateX(wallLeft.getTranslateX() + 5);
         luzPared2.setTranslateY(wallLeft.getTranslateY());
@@ -2289,14 +2479,14 @@ public void configuracionIluminacion(String pared1, String pared2, String pared3
         luzPared3.setTranslateZ(wallLeft.getTranslateZ());
         root3D.getChildren().add(luzPared3);
     } else if ("Ventana".equals(pared3)) {
-        Ventana newVentana = new Ventana();
-        newVentana.setTranslateX(-wallLeft.getTranslateX() + 5);
-        newVentana.setTranslateY(wallLeft.getTranslateY());
-        newVentana.setTranslateZ(wallLeft.getTranslateZ());
-        rotateObjectY(newVentana);
-        rotateObjectY(newVentana);
+        Ventana newVentana3 = new Ventana();
+        newVentana3.setTranslateX(-wallLeft.getTranslateX() + 5);
+        newVentana3.setTranslateY(wallLeft.getTranslateY());
+        newVentana3.setTranslateZ(wallLeft.getTranslateZ());
+        rotateObjectY(newVentana3);
+        rotateObjectY(newVentana3);
         togglePositionsLock();
-        root3D.getChildren().add(newVentana);
+        root3D.getChildren().add(newVentana3);
         PointLight luzPared3 = new PointLight(Color.WHITE);
         luzPared3.setTranslateX(-wallLeft.getTranslateX() + 5);
         luzPared3.setTranslateY(wallLeft.getTranslateY());
@@ -2316,7 +2506,7 @@ public void configuracionIluminacion(String pared1, String pared2, String pared3
 
 public void addItemToScene(Group itemGroup) {
     itemGroup.setTranslateX(0);
-    itemGroup.setTranslateY(-500);
+    itemGroup.setTranslateY(0);
     itemGroup.setTranslateZ(0);
     itemGroup.setOnMousePressed(this::handleGroupPressed);
     itemGroup.setOnMouseDragged(this::handleGroupPressed);

@@ -8,6 +8,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Point3D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
 import javafx.scene.SubScene;
@@ -59,10 +60,8 @@ public class CrearItem extends Application {
     
     private RooMakingJFX3D parentWindow;
 
-    private TextArea hashArea;
-    private Button GenerarHashBtn, RegenerarEscenaBtn, fijarposicionesBtn;
+    private Button fijarposicionesBtn;
     
-    private Group rootJFX3D;
 
     @Override
     public void start(Stage primaryStage) {
@@ -266,7 +265,7 @@ public class CrearItem extends Application {
     // Método para añadir el objeto a la escena
     private void addObjectToScene(Shape3D newObject) {
         newObject.setTranslateX(0);
-        newObject.setTranslateY(-500);
+        newObject.setTranslateY(0);
         newObject.setTranslateZ(0);
         newObject.setOnMousePressed(this::handleObjectPressed);
         newObject.setOnMouseDragged(this::handleObjectDragged);
