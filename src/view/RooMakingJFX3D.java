@@ -449,6 +449,9 @@ private void OrdenarObjetos() {
     for (javafx.scene.Node node : root3D.getChildren()) {
         if (node instanceof Movible) {
             Movible movible = (Movible) node;
+            if (movible instanceof Ventana) {
+                movible.setFijo(positionsLocked);
+            }            
             if (!movible.isFijo()) {
                 continue;
             }
@@ -563,7 +566,6 @@ private void OrdenarObjetos() {
         }
     }
 }
-
     
 /*private void OrdenarObjetos() {
     Random random = new Random();
@@ -594,6 +596,9 @@ private void OrdenarObjetos() {
     for (javafx.scene.Node node : root3D.getChildren()) {
         if (node instanceof Movible) {
             Movible movible = (Movible) node;
+            if (movible instanceof Ventana) {
+                movible.setFijo(positionsLocked);
+            }
             if (!movible.isFijo()) {
                 continue;
             }
