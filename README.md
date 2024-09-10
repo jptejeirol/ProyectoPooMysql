@@ -1,10 +1,17 @@
-# ProyectoPooMysql
+# RooMade
 Proyecto de curso - POO - 2024 - 1
 
-Para ejecutar la aplicaión integrada con Swing y JavaFX en NetBeans IDE 21, es necesario inlcuir el comando: --module-path "ruta de lib de JavaFX" --add-modules javafx.controls,javafx.fxml,javafx.swing,javafx.graphics,javafx.base,javafx.web
-En propiedades del proyecto, run y posteriormente editar la ventana de comandos de la máquina vistual VM.
+## Integrantes:
+- Juan José Hernandez Medina
+- Tejeiro Londoño Juan Pablo
+- Sergio Nikolas Vanegas Martinez
+- Santiago Villarreal Castro
 
-## Video de Demostración Sprint 4
+Aplicación de ordenamiento de muebles y objetos en cuartos.
+- Gestión de base de datos, MySQL
+- Interfáz de usuario, Java Swing y JavaFX
+
+## Video de prueba de funcionamiento
 
 https://github.com/user-attachments/assets/ed6a5442-bdda-450b-a5f2-3f5786c7fc23
 
