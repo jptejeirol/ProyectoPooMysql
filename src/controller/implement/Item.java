@@ -2,8 +2,11 @@ package controller.implement;
 
 /**
  *
- * @author juan_
+ * @author Juan Pablo Tejeiro, Santiago Villareal, Juan José Hernandez, Sergio Nicolas Vanegas;
+ * Grupo Roomade 
+ * 
  */
+
 public class Item extends Molde{
     //private String diseñoId;}
     private String room;

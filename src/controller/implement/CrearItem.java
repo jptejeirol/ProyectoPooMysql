@@ -1,5 +1,11 @@
-package view;
+package controller.implement;
 
+/**
+ *
+ * @author Juan Pablo Tejeiro, Santiago Villareal, Juan José Hernandez, Sergio Nicolas Vanegas;
+ * Grupo Roomade 
+ * 
+ */
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +14,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Point3D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
 import javafx.scene.SubScene;
@@ -18,7 +23,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -34,6 +38,7 @@ import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
 import javafx.scene.shape.TriangleMesh;
 import javafx.stage.Stage;
+import view.RooMakingJFX3D;
 
 
 public class CrearItem extends Application {
@@ -208,7 +213,6 @@ public class CrearItem extends Application {
                 // Todos los campos son necesarios
                 break;
         }
-
         Button createButton = new Button("Crear");
         createButton.setOnAction(e -> {
             try {
@@ -458,133 +462,129 @@ public class CrearItem extends Application {
         return mesh;
     }
     
-        // Clase personalizada para la esfera
     class Esfera3D {
-    private Sphere esfera;
-    public Esfera3D(double radius, Color color) {
-        esfera = new Sphere(radius);
-        esfera.setMaterial(new PhongMaterial(color));
+        private Sphere esfera;
+        public Esfera3D(double radius, Color color) {
+            esfera = new Sphere(radius);
+            esfera.setMaterial(new PhongMaterial(color));
+        }
+        public Sphere getEsfera() {
+            return esfera;
+        }
     }
-    public Sphere getEsfera() {
-        return esfera;
+
+    class Cilindro3D {
+        private Cylinder cilindro;
+        public Cilindro3D(double radius, double height, Color color) {
+            cilindro = new Cylinder(radius, height);
+            cilindro.setMaterial(new PhongMaterial(color));
+        }
+        public Cylinder getCilindro() {
+            return cilindro;
+        }
     }
-}
 
-// Clase personalizada para el cilindro
-class Cilindro3D {
-    private Cylinder cilindro;
-    public Cilindro3D(double radius, double height, Color color) {
-        cilindro = new Cylinder(radius, height);
-        cilindro.setMaterial(new PhongMaterial(color));
+    public class PoliedroPersonalizado extends MeshView {
+        public PoliedroPersonalizado(float width, float height, float depth, Color color) {
+            // Definir los puntos y las caras del poliedro personalizado
+            float[] puntos = {
+                0, height / 2, 0,                // A
+                -width / 2, 0, depth / 2,        // B
+                width / 2, 0, depth / 2,         // C
+                width / 2, 0, -depth / 2,        // D
+                -width / 2, 0, -depth / 2,       // E
+                0, -height / 2, 0                // F
+            };
+            int[] caras = {
+                0, 0, 1, 0, 2, 0,  // ABC
+                0, 0, 2, 0, 3, 0,  // ACD
+                0, 0, 3, 0, 4, 0,  // ADE
+                0, 0, 4, 0, 1, 0,  // AEB
+                1, 0, 5, 0, 2, 0,  // BFC
+                2, 0, 5, 0, 3, 0,  // CFD
+                3, 0, 5, 0, 4, 0,  // DFE
+                4, 0, 5, 0, 1, 0   // EFB
+            };
+
+            TriangleMesh mesh = new TriangleMesh();
+            mesh.getPoints().addAll(puntos);
+            mesh.getFaces().addAll(caras);
+
+            float[] texCoords = {
+                0.5f, 0, 0, 1, 1, 1
+            };
+            mesh.getTexCoords().addAll(texCoords);
+
+            this.setMesh(mesh);
+            PhongMaterial material = new PhongMaterial();
+            material.setDiffuseColor(color);
+            this.setMaterial(material);
+        }
     }
-    public Cylinder getCilindro() {
-        return cilindro;
+
+    public class Tetraedro extends MeshView {
+        public Tetraedro(float width, float height, float depth, Color color) {
+            float[] puntos = {
+                0, height / 2, 0,                     // Vértice superior
+                -width / 2, -height / 2, depth / 2,   // Vértice base 1
+                width / 2, -height / 2, depth / 2,    // Vértice base 2
+                width / 2, -height / 2, -depth / 2    // Vértice base 3
+            };
+            int[] caras = {
+                0, 0, 1, 0, 2, 0,  // Cara 1
+                0, 0, 2, 0, 3, 0,  // Cara 2
+                0, 0, 3, 0, 1, 0,  // Cara 3
+                1, 0, 2, 0, 3, 0   // Cara 4
+            };
+
+            TriangleMesh mesh = new TriangleMesh();
+            mesh.getPoints().addAll(puntos);
+            mesh.getFaces().addAll(caras);
+
+            float[] texCoords = {
+                0.5f, 0, 0, 1, 1, 1
+            };
+            mesh.getTexCoords().addAll(texCoords);
+
+            this.setMesh(mesh);
+            PhongMaterial material = new PhongMaterial();
+            material.setDiffuseColor(color);
+            this.setMaterial(material);
+        }
     }
-}
 
-public class PoliedroPersonalizado extends MeshView {
-    public PoliedroPersonalizado(float width, float height, float depth, Color color) {
-        // Definir los puntos y las caras del poliedro personalizado
-        float[] puntos = {
-            0, height / 2, 0,                // A
-            -width / 2, 0, depth / 2,        // B
-            width / 2, 0, depth / 2,         // C
-            width / 2, 0, -depth / 2,        // D
-            -width / 2, 0, -depth / 2,       // E
-            0, -height / 2, 0                // F
-        };
-        int[] caras = {
-            0, 0, 1, 0, 2, 0,  // ABC
-            0, 0, 2, 0, 3, 0,  // ACD
-            0, 0, 3, 0, 4, 0,  // ADE
-            0, 0, 4, 0, 1, 0,  // AEB
-            1, 0, 5, 0, 2, 0,  // BFC
-            2, 0, 5, 0, 3, 0,  // CFD
-            3, 0, 5, 0, 4, 0,  // DFE
-            4, 0, 5, 0, 1, 0   // EFB
-        };
+    public class Piramide extends MeshView {
+        public Piramide(float width, float height, float depth, Color color) {
+            float[] puntos = {
+                0, height / 2, 0,                     // Vértice superior
+                -width / 2, -height / 2, depth / 2,   // Vértice base 1
+                width / 2, -height / 2, depth / 2,    // Vértice base 2
+                width / 2, -height / 2, -depth / 2,   // Vértice base 3
+                -width / 2, -height / 2, -depth / 2   // Vértice base 4
+            };
+            int[] caras = {
+                0, 0, 1, 0, 2, 0,  // Cara 1
+                0, 0, 2, 0, 3, 0,  // Cara 2
+                0, 0, 3, 0, 4, 0,  // Cara 3
+                0, 0, 4, 0, 1, 0,  // Cara 4
+                1, 0, 2, 0, 3, 0,  // Base 1
+                1, 0, 3, 0, 4, 0   // Base 2
+            };
 
-        TriangleMesh mesh = new TriangleMesh();
-        mesh.getPoints().addAll(puntos);
-        mesh.getFaces().addAll(caras);
+            TriangleMesh mesh = new TriangleMesh();
+            mesh.getPoints().addAll(puntos);
+            mesh.getFaces().addAll(caras);
 
-        float[] texCoords = {
-            0.5f, 0, 0, 1, 1, 1
-        };
-        mesh.getTexCoords().addAll(texCoords);
+            float[] texCoords = {
+                0.5f, 0, 0, 1, 1, 1
+            };
+            mesh.getTexCoords().addAll(texCoords);
 
-        this.setMesh(mesh);
-        PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(color);
-        this.setMaterial(material);
+            this.setMesh(mesh);
+            PhongMaterial material = new PhongMaterial();
+            material.setDiffuseColor(color);
+            this.setMaterial(material);
+        }
     }
-}
-
-// Clase Tetraedro
-public class Tetraedro extends MeshView {
-    public Tetraedro(float width, float height, float depth, Color color) {
-        float[] puntos = {
-            0, height / 2, 0,                     // Vértice superior
-            -width / 2, -height / 2, depth / 2,   // Vértice base 1
-            width / 2, -height / 2, depth / 2,    // Vértice base 2
-            width / 2, -height / 2, -depth / 2    // Vértice base 3
-        };
-        int[] caras = {
-            0, 0, 1, 0, 2, 0,  // Cara 1
-            0, 0, 2, 0, 3, 0,  // Cara 2
-            0, 0, 3, 0, 1, 0,  // Cara 3
-            1, 0, 2, 0, 3, 0   // Cara 4
-        };
-
-        TriangleMesh mesh = new TriangleMesh();
-        mesh.getPoints().addAll(puntos);
-        mesh.getFaces().addAll(caras);
-
-        float[] texCoords = {
-            0.5f, 0, 0, 1, 1, 1
-        };
-        mesh.getTexCoords().addAll(texCoords);
-
-        this.setMesh(mesh);
-        PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(color);
-        this.setMaterial(material);
-    }
-}
-
-// Clase Pirámide
-public class Piramide extends MeshView {
-    public Piramide(float width, float height, float depth, Color color) {
-        float[] puntos = {
-            0, height / 2, 0,                     // Vértice superior
-            -width / 2, -height / 2, depth / 2,   // Vértice base 1
-            width / 2, -height / 2, depth / 2,    // Vértice base 2
-            width / 2, -height / 2, -depth / 2,   // Vértice base 3
-            -width / 2, -height / 2, -depth / 2   // Vértice base 4
-        };
-        int[] caras = {
-            0, 0, 1, 0, 2, 0,  // Cara 1
-            0, 0, 2, 0, 3, 0,  // Cara 2
-            0, 0, 3, 0, 4, 0,  // Cara 3
-            0, 0, 4, 0, 1, 0,  // Cara 4
-            1, 0, 2, 0, 3, 0,  // Base 1
-            1, 0, 3, 0, 4, 0   // Base 2
-        };
-
-        TriangleMesh mesh = new TriangleMesh();
-        mesh.getPoints().addAll(puntos);
-        mesh.getFaces().addAll(caras);
-
-        float[] texCoords = {
-            0.5f, 0, 0, 1, 1, 1
-        };
-        mesh.getTexCoords().addAll(texCoords);
-
-        this.setMesh(mesh);
-        PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(color);
-        this.setMaterial(material);
-    }
-}
 
 }

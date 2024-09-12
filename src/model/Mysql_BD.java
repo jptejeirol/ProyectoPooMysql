@@ -3,6 +3,14 @@ package model;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
+/**
+ *
+ * @author Juan Pablo Tejeiro, Santiago Villareal, Juan José Hernandez, Sergio Nicolas Vanegas;
+ * Grupo Roomade 
+ * 
+ */
+
 public class Mysql_BD {
     
     private static Connection conn;

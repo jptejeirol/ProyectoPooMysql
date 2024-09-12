@@ -4,22 +4,28 @@ import controller.implement.Item;
 import controller.implement.RooMades;
 import controller.implement.Room;
 import controller.implement.RoomJFX;
-import controller.services.ServicesItem;
-import controller.services.ServicesRoom;
-import controller.services.ServicesRoomJFX;
-import controller.services.ServicesUsuario;
+import model.services.ServicesItem;
+import model.services.ServicesRoom;
+import model.services.ServicesRoomJFX;
+import model.services.ServicesUsuario;
 import java.util.List;
+
+/**
+ *
+ * @author Juan Pablo Tejeiro, Santiago Villareal, Juan José Hernandez, Sergio Nicolas Vanegas;
+ * Grupo Roomade 
+ * 
+ */
 
 import javax.swing.table.DefaultTableModel;
 
 
 public class MisDiseños extends javax.swing.JFrame {
-    ServicesItem servItem= new ServicesItem();
-    ServicesRoom servRoom= new ServicesRoom();
-    ServicesRoomJFX servRoomJFX = servRoomJFX = new ServicesRoomJFX();;
-    List<RoomJFX> rooms = servRoomJFX.getRoomsJFXByUsuario(ServicesUsuario.getUsuario());
-    List<Item> items = servItem.getItemsByUsuario(ServicesUsuario.getUsuario());
-    List<Room> roomss = servRoom.getRoomsByUsuario(ServicesUsuario.getUsuario());
+    
+    
+    
+    
+    
     Item item = null;
     Room room = null;
     RoomJFX roomJfX = null;
@@ -40,6 +46,7 @@ public class MisDiseños extends javax.swing.JFrame {
         mainPanel = new javax.swing.JPanel();
         panelDiseños = new javax.swing.JPanel();
         textoDiseños = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
         scrollOpciones = new javax.swing.JScrollPane();
         listaOpciones = new javax.swing.JList<>();
         scrollTabla = new javax.swing.JScrollPane();
@@ -48,6 +55,7 @@ public class MisDiseños extends javax.swing.JFrame {
         jButton1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setResizable(false);
 
         mainPanel.setBackground(new java.awt.Color(245, 245, 220));
         mainPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -59,15 +67,29 @@ public class MisDiseños extends javax.swing.JFrame {
         textoDiseños.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         textoDiseños.setText("Mis Diseños");
 
+        jLabel3.setBackground(new java.awt.Color(0, 0, 0));
+        jLabel3.setFont(new java.awt.Font("Roboto Black", 2, 24)); // NOI18N
+        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Images/roomade/logochiquito.png"))); // NOI18N
+        jLabel3.setText("RooMade");
+        jLabel3.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+
         javax.swing.GroupLayout panelDiseñosLayout = new javax.swing.GroupLayout(panelDiseños);
         panelDiseños.setLayout(panelDiseñosLayout);
         panelDiseñosLayout.setHorizontalGroup(
             panelDiseñosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(textoDiseños, javax.swing.GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
+            .addGroup(panelDiseñosLayout.createSequentialGroup()
+                .addContainerGap(298, Short.MAX_VALUE)
+                .addComponent(textoDiseños)
+                .addGap(151, 151, 151)
+                .addComponent(jLabel3)
+                .addGap(17, 17, 17))
         );
         panelDiseñosLayout.setVerticalGroup(
             panelDiseñosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(textoDiseños, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelDiseñosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(textoDiseños, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
+                .addComponent(jLabel3))
         );
 
         mainPanel.add(panelDiseños, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 800, 60));
@@ -145,31 +167,44 @@ public class MisDiseños extends javax.swing.JFrame {
     private void listaOpcionesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_listaOpcionesMouseClicked
         int indiceLista = listaOpciones.getSelectedIndex();
         System.out.println(indiceLista);
+        ServicesRoomJFX servRoomJFX = servRoomJFX = new ServicesRoomJFX();
+        List<RoomJFX> rooms = servRoomJFX.getRoomsJFXByUsuario(ServicesUsuario.getUsuario());
+        
         
         DefaultTableModel tabla = (DefaultTableModel) tablaMostrar.getModel();
         tabla.setRowCount(0);
         
+        
         switch (indiceLista) {
             case 0:
+                ServicesItem servItem= new ServicesItem();
+                List<Item> items = servItem.getItemsByUsuario(ServicesUsuario.getUsuario());
                 
-                for (Item item : ServicesItem.getItems()) {
+                for (int i = 0; i < items.size(); i++) {
+                    tabla.setColumnIdentifiers(new Object[]{"Usuario", "Item", "Base", "Altura", "Profundidad", "Aplica"});
+                    Item itemm = new Item(items.get(i).getNombreObjeto(), items.get(i).getBase(), items.get(i).getAltura(), items.get(i).getProfundidad());
+                    
                     tabla.addRow(new Object[]{
                         ServicesUsuario.getUsuario(),
-                        item.getNombreObjeto(),
-                        item.getBase(),
-                        item.getAltura(),
-                        item.getProfundidad(),
+                        itemm.getNombreObjeto(),
+                        itemm.getBase(),
+                        itemm.getAltura(),
+                        itemm.getProfundidad(),
                         "No aplica"
                     });
                 }   break;
             case 1:
-                for (Room room : ServicesRoom.getRooms()) {
+                ServicesRoom servRoom= new ServicesRoom();
+                List<Room> roomss = servRoom.getRoomsByUsuario(ServicesUsuario.getUsuario());
+                for (int i = 0; i < roomss.size(); i++) {
+                    tabla.setColumnIdentifiers(new Object[]{"Usuario", "Room", "Base", "Altura", "Profundidad", "Aplica"});
+                    Room rooom = new Room(roomss.get(i).getNombreObjeto(), roomss.get(i).getBase(), roomss.get(i).getAltura(), roomss.get(i).getProfundidad());
                     tabla.addRow(new Object[]{
                         ServicesUsuario.getUsuario(),
-                        room.getNombreObjeto(),
-                        room.getBase(),
-                        room.getAltura(),
-                        room.getProfundidad(),
+                        rooom.getNombreObjeto(),
+                        rooom.getBase(),
+                        rooom.getAltura(),
+                        rooom.getProfundidad(),
                         "No aplica"
                     });
                 }
@@ -182,6 +217,7 @@ public class MisDiseños extends javax.swing.JFrame {
 
                 // Recorrer los datos de cada RoomJFX y agregar una fila por cada uno
                 for (int i = 0; i < rooms.size(); i++) {
+                    tabla.setColumnIdentifiers(new Object[]{"Usuario", "Room", "Base", "Altura", "Profundidad", "Aplica"});
                     // Agregar una fila por cada RoomJFX
                     tabla.addRow(new Object[]{
                         ServicesUsuario.getUsuario(),               // Usuario
@@ -208,6 +244,12 @@ public class MisDiseños extends javax.swing.JFrame {
     private void EliminarButtomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EliminarButtomActionPerformed
         DefaultTableModel model = (DefaultTableModel) tablaMostrar.getModel();
         int[] selectedRows = tablaMostrar.getSelectedRows(); // Obtener filas seleccionadas
+        ServicesRoom servRoom= new ServicesRoom();
+        ServicesRoomJFX servRoomJFX = servRoomJFX = new ServicesRoomJFX();
+        ServicesItem servItem= new ServicesItem();
+        List<RoomJFX> rooms = servRoomJFX.getRoomsJFXByUsuario(ServicesUsuario.getUsuario());
+        List<Item> items = servItem.getItemsByUsuario(ServicesUsuario.getUsuario());
+        List<Room> roomss = servRoom.getRoomsByUsuario(ServicesUsuario.getUsuario());
 
         if (selectedRows.length > 0) {
             int indiceLista = listaOpciones.getSelectedIndex();
@@ -249,6 +291,7 @@ public class MisDiseños extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton botonVolver;
     private javax.swing.JButton jButton1;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JList<String> listaOpciones;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JPanel panelDiseños;

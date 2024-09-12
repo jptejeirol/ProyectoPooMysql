@@ -7,6 +7,7 @@
   </NonVisualComponents>
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="3"/>
+    <Property name="resizable" type="boolean" value="false"/>
   </Properties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
@@ -223,7 +224,7 @@
                 <Component class="javax.swing.JLabel" name="jLabel2">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/imagenes/avatardefault_92824.png"/>
+                      <Image iconType="3" name="/Images/roomade/avatardefault_92824.png"/>
                     </Property>
                   </Properties>
                 </Component>
@@ -422,7 +423,7 @@
                   <Color blue="ff" green="ff" red="ff" type="rgb"/>
                 </Property>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/viewLogearseRegistrarse/logochiquito.png"/>
+                  <Image iconType="3" name="/Images/roomade/logochiquito.png"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="RooMade"/>
                 <Property name="horizontalTextPosition" type="int" value="2"/>
@@ -440,7 +441,7 @@
                   <Color blue="ff" green="ff" red="ff" type="rgb"/>
                 </Property>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/imagenes/1486504328-bullet-list-menu-lines-points-items-options_81334.png"/>
+                  <Image iconType="3" name="/Images/roomade/1486504328-bullet-list-menu-lines-points-items-options_81334.png"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Men&#xfa;"/>
               </Properties>

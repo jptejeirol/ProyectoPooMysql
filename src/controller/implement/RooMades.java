@@ -3,7 +3,7 @@ package controller.implement;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import controller.services.ServicesUsuario;
+import model.services.ServicesUsuario;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -11,8 +11,11 @@ import java.util.Map;
 
 /**
  *
- * @author juan_
+ * @author Juan Pablo Tejeiro, Santiago Villareal, Juan José Hernandez, Sergio Nicolas Vanegas;
+ * Grupo Roomade 
+ * 
  */
+
 public class RooMades{
     // Crea listas para almacenar los valores de cada Room
     private List<Double> bases = new ArrayList<>();
@@ -21,27 +24,27 @@ public class RooMades{
     private List<Integer> numerosDeObjetos = new ArrayList<>();
     private List<String> nombres = new ArrayList<>();
 
-public RooMades(List<RoomJFX> roomJFX) {
-    for (int i = 0; i < roomJFX.size(); i++) {  // Corregido: Empezar desde 0
-        Room room = MedidasRoom(roomJFX.get(i).getHash());
+    public RooMades(List<RoomJFX> roomJFX) {
+        for (int i = 0; i < roomJFX.size(); i++) {  // Corregido: Empezar desde 0
+            Room room = MedidasRoom(roomJFX.get(i).getHash());
 
-        if (room != null) {
-            nombres.add(roomJFX.get(i).getNombre());
-            bases.add(room.getBase());
-            alturas.add(room.getAltura());
-            profundidades.add(room.getProfundidad());
-            numerosDeObjetos.add(NumeroDeObjetosRoom(roomJFX.get(i).getHash()));
-        } else {
-            System.err.println("Room no encontrado para el hash: " + roomJFX.get(i).getHash());
-            // Añade valores predeterminados si el room no es encontrado
-            nombres.add("Desconocido");
-            bases.add(0.0);
-            alturas.add(0.0);
-            profundidades.add(0.0);
-            numerosDeObjetos.add(0);
+            if (room != null) {
+                nombres.add(roomJFX.get(i).getNombre());
+                bases.add(room.getBase());
+                alturas.add(room.getAltura());
+                profundidades.add(room.getProfundidad());
+                numerosDeObjetos.add(NumeroDeObjetosRoom(roomJFX.get(i).getHash()));
+            } else {
+                System.err.println("Room no encontrado para el hash: " + roomJFX.get(i).getHash());
+                // Añade valores predeterminados si el room no es encontrado
+                nombres.add("Desconocido");
+                bases.add(0.0);
+                alturas.add(0.0);
+                profundidades.add(0.0);
+                numerosDeObjetos.add(0);
+            }
         }
     }
-}
 
     public List<Double> getBases() {
         return bases;
@@ -96,10 +99,6 @@ public RooMades(List<RoomJFX> roomJFX) {
             return room;
         }
         return room;
-
-        
-
-        
     }
 
     private int decodeObjectNumeroDeItems(Map<String, Object> objectData, int i) {

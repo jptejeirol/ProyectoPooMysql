@@ -1,14 +1,17 @@
 package view;
 
-import controller.Usuario;
-import controller.services.ServicesUsuario;
+import controller.implement.Usuario;
+import model.services.ServicesUsuario;
 import java.awt.Color;
-import viewConfiguracion.ConfiguracionView;
-import viewLogearseRegistrarse.Login;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 /**
  *
- * @author Grupo RooMade
+ * @author Juan Pablo Tejeiro, Santiago Villareal, Juan José Hernandez, Sergio Nicolas Vanegas;
+ * Grupo Roomade 
+ * 
  */
 public class Menu extends javax.swing.JFrame {
     private CrearDiseño PaginaDiseño;
@@ -62,6 +65,7 @@ public class Menu extends javax.swing.JFrame {
         CrearDiseño = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setResizable(false);
 
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));
         jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -135,7 +139,7 @@ public class Menu extends javax.swing.JFrame {
             }
         });
 
-        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/imagenes/avatardefault_92824.png"))); // NOI18N
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Images/roomade/avatardefault_92824.png"))); // NOI18N
 
         NomUser.setFont(new java.awt.Font("Roboto Black", 0, 12)); // NOI18N
         NomUser.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -286,14 +290,14 @@ public class Menu extends javax.swing.JFrame {
         jLabel3.setBackground(new java.awt.Color(0, 0, 0));
         jLabel3.setFont(new java.awt.Font("Roboto Black", 2, 24)); // NOI18N
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/viewLogearseRegistrarse/logochiquito.png"))); // NOI18N
+        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Images/roomade/logochiquito.png"))); // NOI18N
         jLabel3.setText("RooMade");
         jLabel3.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
 
         jLabel1.setBackground(new java.awt.Color(0, 0, 0));
         jLabel1.setFont(new java.awt.Font("Roboto Black", 2, 18)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/imagenes/1486504328-bullet-list-menu-lines-points-items-options_81334.png"))); // NOI18N
+        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Images/roomade/1486504328-bullet-list-menu-lines-points-items-options_81334.png"))); // NOI18N
         jLabel1.setText("Menú");
 
         javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
@@ -559,7 +563,32 @@ public class Menu extends javax.swing.JFrame {
     }//GEN-LAST:event_MisDiseñosMouseExited
 
     private void AyudaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AyudaActionPerformed
-            javax.swing.JOptionPane.showMessageDialog(this, "Para más info comunicate con nosotros. ");
+        String message = """
+            ¿Cómo usar RooMaking por primera vez?:
+            1. Crea tus diseños en "Crear Diseños" eligiendo entre hacer un Item o hacer un Room (toda medida se digita en metros).
+            2. Luego, para hacer un cuarto, ve a "RooMaking" y elige "Crear Cuarto" para crear el cuarto con las medidas que digitaste.
+            3. Elige entre "Crear Item" para poner tu item ya hecho en el simulador de tu cuarto "RooMaking", o usa cualquier objeto en nuestro catálogo de objetos.
+            4. Primero, tendrás que poner los objetos que quieras fijar y luego usar la opción "Fijar Objetos". Los objetos puestos hasta ahora serán los objetos fijos.
+            5. Desde ahora, coloca los objetos que quieras organizar; adicionalmente, puedes añadir las opciones de iluminación que necesites.
+            6. Haz clic en "Agregar para ordenar" y disfruta de las diferentes opciones ordenadas en base a la luz que el programa otorga.
+            7. Si deseas guardar tu RooMade, haz clic en "Guardar" y digita el nombre deseado.
+            8. Para cargar nuevamente la Room, simplemente haz clic en "Cargar" y se mostrarán todos los RooMades.
+
+            Cosas a tomar en cuenta:
+            - En "Mis Diseños" podrás ver todos los Items, Rooms y RooMades que hayas hecho, además de eliminar lo que necesites.
+            - En la sección de configuración, podrás actualizar tu información personal.
+            
+            Nota: Todas las medidas estan en milimetros excepto al digitarlas en "Crear Diseño"
+                         
+                                                                                                      Gracias por usar RooMade <3.
+        """;
+
+        JTextArea textArea = new JTextArea(16, 82);
+        textArea.setText(message);
+        textArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+
+        JOptionPane.showMessageDialog(null, scrollPane, "Información", JOptionPane.INFORMATION_MESSAGE);
     }//GEN-LAST:event_AyudaActionPerformed
 
     private void AyudaMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_AyudaMouseEntered

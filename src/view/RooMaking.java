@@ -7,6 +7,13 @@ import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+/**
+ *
+ * @author Juan Pablo Tejeiro, Santiago Villareal, Juan José Hernandez, Sergio Nicolas Vanegas;
+ * Grupo Roomade 
+ * 
+ */
+
 public class RooMaking extends javax.swing.JFrame {
     
     private JFXPanel fxPanel;
@@ -24,9 +31,9 @@ public class RooMaking extends javax.swing.JFrame {
             javaFXPanel.add(fxPanel, BorderLayout.CENTER);
             getContentPane().setBackground(new java.awt.Color(168,209,165)); // SkyBlue
             Platform.runLater(() -> {
-                RooMakingJFX3D rooMakingJFX = new RooMakingJFX3D();
-                rooMakingJFX.start(new Stage()); // Inicializa RoomDesigner3D
-                Scene scene = rooMakingJFX.getSubScene().getRoot().getScene(); // Obtiene la escena de RoomDesigner3D
+                RooMakingJFX3DStart rooMakingJFXReal = new RooMakingJFX3DStart();
+                rooMakingJFXReal.start(new Stage()); // Inicializa RoomDesigner3D
+                Scene scene = RooMakingJFX3DStart.getSubScene().getRoot().getScene(); // Obtiene la escena de RoomDesigner3D
                 fxPanel.setScene(scene);
             });
         } catch (Exception e) {

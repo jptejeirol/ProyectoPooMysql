@@ -1,8 +1,12 @@
 package controller.implement;
+
 /**
  *
- * @author juan_
+ * @author Juan Pablo Tejeiro, Santiago Villareal, Juan José Hernandez, Sergio Nicolas Vanegas;
+ * Grupo Roomade 
+ * 
  */
+
 public abstract class Molde {
     private String nombreObjeto;
     private double base;

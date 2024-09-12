@@ -2,10 +2,17 @@ package view;
 
 import controller.implement.Item;
 import controller.implement.Room;
-import controller.services.ServicesItem;
-import controller.services.ServicesRoom;
-import controller.services.ServicesUsuario;
+import model.services.ServicesItem;
+import model.services.ServicesRoom;
+import model.services.ServicesUsuario;
 import java.awt.Color;
+
+/**
+ *
+ * @author Juan Pablo Tejeiro, Santiago Villareal, Juan José Hernandez, Sergio Nicolas Vanegas;
+ * Grupo Roomade 
+ * 
+ */
 
 public class CrearDiseño extends javax.swing.JFrame {
     private Integer indice;
@@ -40,8 +47,10 @@ public class CrearDiseño extends javax.swing.JFrame {
         botonVolver = new javax.swing.JButton();
         TextoPregunta3 = new javax.swing.JLabel();
         TextNombre = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setResizable(false);
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -124,7 +133,7 @@ public class CrearDiseño extends javax.swing.JFrame {
             }
         });
 
-        panelInterior.setBackground(new java.awt.Color(245, 245, 234));
+        panelInterior.setBackground(new java.awt.Color(255, 252, 243));
         panelInterior.setForeground(new java.awt.Color(204, 255, 204));
 
         textoBase.setFont(new java.awt.Font("Roboto Medium", 0, 14)); // NOI18N
@@ -249,6 +258,13 @@ public class CrearDiseño extends javax.swing.JFrame {
             }
         });
 
+        jLabel3.setBackground(new java.awt.Color(0, 0, 0));
+        jLabel3.setFont(new java.awt.Font("Roboto Black", 2, 24)); // NOI18N
+        jLabel3.setForeground(new java.awt.Color(102, 102, 102));
+        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Images/roomade/logochiquito.png"))); // NOI18N
+        jLabel3.setText("RooMade");
+        jLabel3.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
         mainPanelLayout.setHorizontalGroup(
@@ -256,9 +272,6 @@ public class CrearDiseño extends javax.swing.JFrame {
             .addGroup(mainPanelLayout.createSequentialGroup()
                 .addGap(22, 22, 22)
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(botonVolver)
-                    .addComponent(panelInterior, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(TextoPregunta2)
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addComponent(ListaDesplegable1, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -266,7 +279,17 @@ public class CrearDiseño extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(TextoPregunta3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(TextNombre))))
+                            .addComponent(TextNombre)))
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addComponent(botonVolver)
+                                .addGap(215, 215, 215)
+                                .addComponent(jLabel3))
+                            .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(panelInterior, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(TextoPregunta2)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addGap(30, 30, 30))
         );
         mainPanelLayout.setVerticalGroup(
@@ -285,8 +308,10 @@ public class CrearDiseño extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(panelInterior, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(botonVolver)
-                .addContainerGap(14, Short.MAX_VALUE))
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(botonVolver)
+                    .addComponent(jLabel3))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel1.add(mainPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 90, 480, 420));
@@ -306,17 +331,54 @@ public class CrearDiseño extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void RegistrarObjetoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegistrarObjetoActionPerformed
-        if(indice==2 && !"".equals(TextNombre.getText()) && !"".equals(TextBase.getText()) && !"".equals(TextAltura.getText()) && !"".equals(TextProfundidad.getText())){
-            Item item = new Item(TextNombre.getText(), Double.parseDouble(TextBase.getText()), Double.parseDouble(TextAltura.getText()), Double.parseDouble(TextProfundidad.getText()));
+        if(ListaDesplegable1.getSelectedItem().equals("Item") && !"".equals(TextNombre.getText()) && !"".equals(TextBase.getText()) && !"".equals(TextAltura.getText()) && !"".equals(TextProfundidad.getText())){
+            Item item = new Item(TextNombre.getText(), (Double.parseDouble(TextBase.getText())*1000), (Double.parseDouble(TextAltura.getText())*1000), (Double.parseDouble(TextProfundidad.getText())*1000));
             servItem.guardar_item(ServicesUsuario.getUsuario(), item);
             ServicesItem.setItems(item);
             javax.swing.JOptionPane.showMessageDialog(this, "¡Tu item ha sido guardado!");
-        }else if (indice==1 && !"".equals(TextNombre.getText()) && !"".equals(TextBase.getText()) && !"".equals(TextAltura.getText()) && !"".equals(TextProfundidad.getText())){
-            Room room = new Room(TextNombre.getText(), Double.parseDouble(TextBase.getText()), Double.parseDouble(TextAltura.getText()), Double.parseDouble(TextProfundidad.getText()));
+            if(!TextProfundidad.getText().equals("")){
+                TextProfundidad.setText("(Metros)");
+                TextProfundidad.setForeground(Color.black);
+            }
+            if(!TextBase.getText().equals("")){
+                TextBase.setText("(Metros)");
+                TextBase.setForeground(Color.black);
+            }
+            if(!TextAltura.getText().equals("")){
+                TextAltura.setText("(Metros)");
+                TextAltura.setForeground(Color.black);
+            }
+        }else if (ListaDesplegable1.getSelectedItem().equals("Room") && !"".equals(TextNombre.getText()) && !"".equals(TextBase.getText()) && !"".equals(TextAltura.getText()) && !"".equals(TextProfundidad.getText())){
+            Room room = new Room(TextNombre.getText(), (Double.parseDouble(TextBase.getText())*1000), (Double.parseDouble(TextAltura.getText())*1000), (Double.parseDouble(TextProfundidad.getText())*1000));
             servRoom.guardar_room(ServicesUsuario.getUsuario(), room);
             ServicesRoom.setRooms(room);
             javax.swing.JOptionPane.showMessageDialog(this, "¡Tu Room ha sido guardada!");
+            if(!TextProfundidad.getText().equals("")){
+                TextProfundidad.setText("(Metros)");
+                TextProfundidad.setForeground(Color.black);
+            }
+            if(!TextBase.getText().equals("")){
+                TextBase.setText("(Metros)");
+                TextBase.setForeground(Color.black);
+            }
+            if(!TextAltura.getText().equals("")){
+                TextAltura.setText("(Metros)");
+                TextAltura.setForeground(Color.black);
+            }
+
         }else{javax.swing.JOptionPane.showMessageDialog(this, "Has dejado un valo nulo");}
+            if(!TextProfundidad.getText().equals("")){
+                TextProfundidad.setText("(Metros)");
+                TextProfundidad.setForeground(Color.black);
+            }
+            if(!TextBase.getText().equals("")){
+                TextBase.setText("(Metros)");
+                TextBase.setForeground(Color.black);
+            }
+            if(!TextAltura.getText().equals("")){
+                TextAltura.setText("(Metros)");
+                TextAltura.setForeground(Color.black);
+            }
     }//GEN-LAST:event_RegistrarObjetoActionPerformed
 
     private void botonVolverActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonVolverActionPerformed
@@ -375,6 +437,7 @@ public class CrearDiseño extends javax.swing.JFrame {
     private javax.swing.JLabel TextoPregunta3;
     private javax.swing.JPanel backPanel;
     private javax.swing.JButton botonVolver;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JPanel panelCentral;
